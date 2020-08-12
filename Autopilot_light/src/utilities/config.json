@@ -1,0 +1,82 @@
+{
+    "Version": "0.5",
+    "PC_Name": "c3po",
+    "pc_ip": "192.168.10.3",
+    "GENERAL": {
+        "my_mmsi": 254718240
+    },
+    "MODI": {
+        "threaded_mode": true,
+        "cambpix": false,
+        "udp_mode": true,
+        "start_command": false,
+        "spoofsonar": true,
+        "serial_control": false,
+        "start-command": false,
+        "debugging_mode": false,
+        "topic_mode": true
+    },
+    "IP_ADDRESSES": {
+        "self_ip": "192.168.10.3",
+        "ship_comm_address": "192.168.10.4",
+        "ip_rec_telemetry": "192.168.10.3",
+        "ip_send_atlantis": "192.168.10.3",
+        "ip_send_CapApp": "192.168.10.4",
+        "ip_send_SendRPA3": "192.168.10.5"
+    },
+    "LOGGER": {
+        "root_name": "Listener",
+        "root_level": 10,
+        "file_path": "Log"
+    },
+    "UDP_PORTS": {
+        "port_rec_NMEA": 7777,
+        "port_rec_AIS": 7778,
+        "port_rec_Track": 5079,
+        "port_rec_Asterix": 4377,
+        "port_rec_ATL": 8008,
+        "port_send_atlantis": 3322,
+        "port_send_CapApp": 3322,
+        "port_send_SendRPA3": 1234
+    },
+    "ARDUINO": {
+        "com_send_Arduino": "/dev/ttyS1",
+        "baud_send_Arduino": 115200
+    },
+    "SHIP_MAT": {
+        "ships_mat_samples": 8,
+        "ships_mat_vessels": 50,
+        "ship_mat_parameters": 21,
+        "ROI_ships": 0.08
+    },
+    "NAV_SHAPES": {
+        "ships_data": "../data/ShipDimensions"
+    },
+    "NAV_PATH": {
+        "ships_mass": 10,
+        "path_seed": "../data/PathSeeds/Boompjes2Waalhaven_pier7_8.csv",
+        "path_decimation": 10,
+        "force_static_path": false
+    },
+    "NMEA": {
+        "message_types": [
+            "$GPRMC",
+            "$HCHDT",
+            "$HEHDT",
+            "$GORPM",
+            "$SDDPT",
+            "$GORSA",
+            "$GOROR"
+        ]
+    },
+    "TOPICS": {
+        "nav_path": "paths_el",
+        "nav_forecast": "forecast_el",
+        "metrics_topic": "metrics_el",
+        "nav_control": "controls_el",
+        "ais_topic": "ais_el",
+        "nmea_topics": [
+            "nmea_el"
+        ]
+    }
+}
