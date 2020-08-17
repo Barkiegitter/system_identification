@@ -1,0 +1,18 @@
+# Should contain the required packages for the code 2020-05-04
+argh==0.26.2
+certifi==2020.4.5.1
+cycler==0.10.0
+fire==0.3.1
+kiwisolver==1.2.0
+libais==0.17
+matplotlib==3.2.1
+numpy==1.18.3
+pybind11==2.5.0
+pybind11-cmake==1.0.0
+pynmea2==1.15.0
+pyparsing==2.4.7
+pyserial==3.4
+python-dateutil==2.8.1
+scipy==1.4.1
+six==1.14.0
+termcolor==1.1.0

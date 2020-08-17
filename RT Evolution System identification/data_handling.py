@@ -12,14 +12,7 @@ class data_handling:
 
         #gps
         self.df_gps = pd.read_csv('./RPA3 trials/gpgga.csv', error_bad_lines=True)
-        # self.df_gps = self.df_gps.dropna(subset=['timestamp                   content                                                                '])
-        # self.df_gps = self.df_gps.iloc[1:]
-        # self.df_gps = self.df_gps.rename(columns={'timestamp                   content                                                                ' : 'timestampcontent',
-        #                                           'Unnamed: 2' : 'lat', 'Unnamed: 4' : 'lon'})
-        # self.df_gps.timestampcontent = self.df_gps.timestampcontent.apply(lambda x: x[0:26])
-
         self.df_gps.content = self.df_gps.content.str.split(',')
-
         self.df_gps['lat'] = self.df_gps.content.apply(lambda x: float(x[2])/100)
         self.df_gps['lon'] = self.df_gps.content.apply(lambda x: float(x[4])/100)
         self.df_gps = self.df_gps[['timestamp', 'lat', 'lon']]
@@ -28,12 +21,6 @@ class data_handling:
 
         #hdg
         self.df_hdg = pd.read_csv('./RPA3 trials/hehdt.csv')
-
-
-        # self.df_hdg = self.df_hdg.rename(
-        #     columns={self.df_hdg.columns[0] : 'timestampcontent', self.df_hdg.columns[1] : 'hdg' })
-        #
-        # self.df_hdg.timestampcontent = self.df_hdg.timestampcontent.apply(lambda x: x[0:26])
         self.df_hdg.content = self.df_hdg.content.str.split(',')
         self.df_hdg['hdg'] = self.df_hdg.content.apply(lambda x: float(x[1]) )
         self.df_hdg = self.df_hdg[['timestamp', 'hdg']]
@@ -43,11 +30,6 @@ class data_handling:
 
         #rpm
         self.df_rpm = pd.read_csv('./RPA3 trials/aiadc.csv')
-        # self.df_rpm = self.df_rpm.rename(
-        #     columns={self.df_rpm.columns[0]: 'timestampcontent', self.df_rpm.columns[1]: 'rpm'})
-        # self.df_rpm.timestampcontent = self.df_rpm.timestampcontent.apply(lambda x: x[0:26])
-        # self.df_rpm = self.df_rpm[['timestampcontent', 'rpm']]
-        # self.df_rpm['time'] = pd.to_datetime(self.df_rpm.timestampcontent, format='%Y-%m-%d %H:%M:%S.%f')
         print(self.df_rpm.head())
         self.df_rpm.content = self.df_rpm.content.str.split(',')
         self.df_rpm['rpm'] = self.df_rpm.content.apply(lambda x: float(x[1]))
@@ -69,33 +51,10 @@ class data_handling:
         self.df_rsa['time'] = pd.to_datetime(self.df_rsa.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
         print(self.df_rsa.head())
 
-    # def read_csv(self):
-    #     with open('example.csv', 'r') as csv_file:
-    #         csv_reader = csv.reader(csv_file)
-    #         return csv_reader[-1]
-    # def merge_df(self):
-    #
-
     def printstuff(self):
         print(self.df_rpm)
-
-    # def return_dataframe_full(self):
-    #     return self.df_main
-
-
-
-    # def interpolate(self):
-    #
-    #
-    # def plot(self):
-    #
-
 start = time.time()
 main = data_handling()
-
-
-
-
 
 def convert_float(val):
     try:
@@ -113,16 +72,6 @@ df_main['rsa'] = 0.0
 df_rsa = main.df_rsa
 df_rpm = main.df_rpm
 df_hdg = main.df_hdg
-
-
-# plt.plot(df_rpm.rpm.tolist())
-
-# df_hdg.hdg = df_hdg.hdg.apply(lambda x: convert_float(x))
-# df_hdg = df_hdg.dropna(subset=['hdg'])
-# df_hdg.hdg = df_hdg.hdg.apply(lambda x: float(x) if x.isdigit() and '.' in x else 'a')
-# df_hdg.hdg = df_hdg[(df_hdg.hdg!='a')]
-# df_hdg.hdg = df_hdg.hdg.astype(float)
-
 integer_loop = 1
 for i in df_main[1:].index:
     for k in df_rsa[integer_loop:].index:
@@ -195,6 +144,7 @@ df_main.to_csv('test.csv', index =False)
 
 
 
+df.drop_duplicates(subset=['A', 'C'], keep=False)
 
 
 
@@ -204,47 +154,3 @@ df_main.to_csv('test.csv', index =False)
 
 
 
-
- # data handling
-#
-#
-# import ship_date_session_reference_variable
-# perform interpolation with function
-#
-# interpolation module heading RPM RSA (else other than GPS)
-# export for data process
-#
-#
-#
-#
-# Processing
-#
-# prepare all states configure
-# Kalman filter
-# body frame
-# low freq filter
-#
-#
-#
-#
-#
-# Plotting module
-#
-#
-#
-#
-#
-# Hydronamic coeff
-#
-# EOM
-# autoregression
-# determine hydrodynamic coeff
-# export coeff
-#
-#
-# Calc RMSE for manouvres
-#
-# export to statespace module of any ship!!
-#
-#
-# for autotuning manoeuvring

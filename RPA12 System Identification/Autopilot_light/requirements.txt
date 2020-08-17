@@ -1,0 +1,19 @@
+# Should contain the required packages for the code 2020-05-04
+argh
+certifi
+cycler
+kiwisolver
+libais
+matplotlib
+numpy
+pybind11
+pybind11-cmake
+pynmea2
+pyparsing
+pyserial
+python-dateutil
+scipy
+six
+termcolor
+cap-comm
+filterpy
