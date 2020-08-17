@@ -46,7 +46,7 @@ class UDPProcessor():
         #       "$PTCF", "$GPZDA", "$PRDID", "$GPRMC", "$HCHDG", "$GPGLL", "GPVTG"
         s = nmea_message
         p = s.split(',')[0]
-        # print(p)
+        print(p)
         # self.log.info(f"nmea_revieve nmea : lat {ships_mat[0, 0, 2]}")
         if p in self.message_types:  # Inor types that are not defined in the config file
             if p == "$GPGLL":
@@ -112,6 +112,29 @@ class UDPProcessor():
 
                 return (for_send, ships_mat)
 
+            if p == '$GOTRD':
+                # nmea = pynmea2.parse(s)
+                # print(s.split(','))
+                try:
+
+                    ships_mat[:, 0, 1] = self.my_mmsi
+                    ships_mat[2, 0, 2] = nmea.data[2]
+                    # ships_mat[2, 0, 3] = nmea.longitude
+                    # ships_mat[2, 0, 5] = nmea.spd_over_grnd * 1.943846
+                    # ships_mat[2, 0, 7] = nmea.true_course
+                    #                   # nmea.rpm
+                    #
+                    # self.rmc_speed = True  # Can use external speed
+
+
+                except Exception as e:
+                    if self.logging == True:
+                        self.log.error(f"nmea_receive : Except - GORPM - {e}")
+                    else:
+                        pass
+
+                return (for_send, ships_mat)
+
             if p == '$GOROR':
                 poo =s.split(",")
                 # print(1, poo)
@@ -138,7 +161,7 @@ class UDPProcessor():
             if p == '$GORSA':
                 poo =s.split(",")
                 # print(poo[3])
-                # print(poo)
+                print(poo)
                 # print(1, poo)
                 # nmea = pynmea2.parse(s)
                 try:

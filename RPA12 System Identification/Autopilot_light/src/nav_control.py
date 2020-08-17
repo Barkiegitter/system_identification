@@ -124,6 +124,14 @@ class SimpleControls:
     #create def function sending commands to ship
     
 
+    def RPA12_command_propeller(self, ):
+
+
+
+    def RPA12_command_rudder(self):
+
+
+
 
     def survey_throttle(self, ships_mat):
         #Sea Hunter

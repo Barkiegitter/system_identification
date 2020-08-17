@@ -109,6 +109,11 @@ class SimpleControls:
         self.t_start_manoeuvre_zigzag_20 = 0
         self.t_start_manoeuvre_astern = 0
 
+    def RT_Evolution_azimuth_thruster_command(self, engine_num, rpm, rud_angle, ships_mat):
+        for_send = self.nmea_make.TRC(engine_num, rpm, 100, rud_angle)
+        self.SendRPA3.send_string("recieved", for_send, ships_mat)
+        write_topic(self.topic_name, for_send)
+
     def write_csv(self, data, name):
         headers = ['time', 'lat', 'lon', 'hdg', 'rpm', 'rsa']
         with open(name+'.csv', 'a') as outfile:
@@ -164,77 +169,38 @@ class SimpleControls:
             covered_turn = ships_mat[0,0,7] - self.heading_difference_circle_right
             print(covered_turn)
             if self.t_start_manoeuvre_circle_right<2.0:
-                #MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
             elif covered_turn>=-10 and covered_turn<=-5 or abs(covered_turn)>350 or self.check_circle_manoeuvre_right==1:
 
                 self.check_circle_manoeuvre_right = 1
                 print(time.time() - self.t_end_manoeuvre_circle_right)
-                if time.time() - self.t_end_manoeuvre_circle_right > 5.0:
+                if time.time() - self.t_end_manoeuvre_circle_right > 10.0:
                     self.manoeuvre = None
 
                 else:
-                    # MAIN STARBOARD THRUSTER
-                    for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                    write_topic(self.topic_name, for_send)
-
-                    # MAIN PORT THRUSTER
-                    for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                    write_topic(self.topic_name, for_send)
-
-                    # BOW THRUSTER
-                    for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                    write_topic(self.topic_name, for_send)
-
-                    # RUDDERS
-                    for_send = self.nmea_make.ROR(int(0), int(0))
-                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                    write_topic(self.topic_name, for_send)
+                    # MAIN PORT AZIMUTH THRUSTER
+                    self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                    # MAIN STARBOARD AZIMUTH THRUSTER
+                    self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                    # AFT AZIMUTH THRUSTER
+                    self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
             else:
-                #MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                #MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                #BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0 )
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                #RUDDERS
-                for_send = self.nmea_make.ROR(int(35), int(35))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-                self.t_end_manoeuvre_circle_right = time.time()
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, -35, ships_mat)
+                self.t_end_manoeuvre_circle_left = time.time()
 
 
             self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            -float(ships_mat[2, 0, 3])], environment_variable)
+                            float(ships_mat[2, 0, 3])], environment_variable)
 
     def manoeuvre_circle_left(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
@@ -246,79 +212,38 @@ class SimpleControls:
             covered_turn = ships_mat[0,0,7] - self.heading_difference_circle_left
             print(covered_turn)
             if self.t_start_manoeuvre_circle_left<2.0:
-                #MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
             elif covered_turn<=10 and covered_turn>=5 or abs(covered_turn)>350 or self.check_circle_manoeuvre_left==1:
                 self.check_circle_manoeuvre_left = 1
-                if time.time() - self.t_end_manoeuvre_circle_left >5.0:
+                if time.time() - self.t_end_manoeuvre_circle_left >10.0:
                     self.manoeuvre = None
 
                 else:
-                    # MAIN STARBOARD THRUSTER
-                    for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                    write_topic(self.topic_name, for_send)
-
-                    # MAIN PORT THRUSTER
-                    for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                    write_topic(self.topic_name, for_send)
-
-                    # BOW THRUSTER
-                    for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                    write_topic(self.topic_name, for_send)
-
-                    # RUDDERS
-                    for_send = self.nmea_make.ROR(int(0), int(0))
-                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                    write_topic(self.topic_name, for_send)
-
-                    #start another timer add another iff statement
+                    # MAIN PORT AZIMUTH THRUSTER
+                    self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                    # MAIN STARBOARD AZIMUTH THRUSTER
+                    self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                    # AFT AZIMUTH THRUSTER
+                    self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
 
 
             else:
-                #MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                #MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                #BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0 )
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                #RUDDERS
-                for_send = self.nmea_make.ROR(int(-35), int(-35))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 35, ships_mat)
                 self.t_end_manoeuvre_circle_left = time.time()
 
 
             self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            -float(ships_mat[2, 0, 3])], environment_variable)
+                            float(ships_mat[2, 0, 3])], environment_variable)
 
 
 
@@ -333,191 +258,90 @@ class SimpleControls:
             covered_turn = ships_mat[0,0,7] - self.heading_difference_zigzag_10
             print(covered_turn)
             if self.t_start_manoeuvre_zigzag_10<2.0:
-                #MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
             elif self.manoeuvre_zigzag_10_phase == 0:
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(10), int(10))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, -10, ships_mat)
                 if covered_turn>10.0 or covered_turn>-350 and covered_turn<-345:
                     self.manoeuvre_zigzag_10_phase = 1
             elif self.manoeuvre_zigzag_10_phase==1:
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(-10), int(-10))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 10, ships_mat)
                 self.t_end_manoeuvre_zigzag_10 = time.time()
                 if covered_turn<-10.0 or covered_turn<350 and covered_turn>345:
                     self.manoeuvre_zigzag_10_phase = 2
             elif self.manoeuvre_zigzag_10_phase == 2:
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-                if time.time() - self.t_end_manoeuvre_zigzag_10 > 5.0:
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
+                if time.time() - self.t_end_manoeuvre_zigzag_10 > 10.0:
                     self.manoeuvre = None
 
-
-
-
             self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            -float(ships_mat[2, 0, 3])], environment_variable)
+                            float(ships_mat[2, 0, 3])], environment_variable)
     def manoeuvre_zigzag_20(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
-        #initialize and capture current attitude
-        if time.time() - self.t_reg >0.2:
+        # initialize and capture current attitude
+        if time.time() - self.t_reg > 0.2:
             self.t_start_manoeuvre_zigzag_20 = self.t_start_manoeuvre_zigzag_20 + (time.time() - self.t_reg)
 
             self.t_reg = time.time()
-            covered_turn = ships_mat[0,0,7] - self.heading_difference_zigzag_20
+            covered_turn = ships_mat[0, 0, 7] - self.heading_difference_zigzag_20
             print(covered_turn)
-            if self.t_start_manoeuvre_zigzag_20<2.0:
-                #MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+            if self.t_start_manoeuvre_zigzag_20 < 2.0:
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
             elif self.manoeuvre_zigzag_20_phase == 0:
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(20), int(20))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-                if covered_turn>20.0 or covered_turn>-340 and covered_turn<-335:
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, -20, ships_mat)
+                if covered_turn > 20.0 or covered_turn > -340 and covered_turn < -335:
                     self.manoeuvre_zigzag_20_phase = 1
-            elif self.manoeuvre_zigzag_20_phase==1:
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(-20), int(-20))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-                self.t_end_manoeuvre_zigzag_10 = time.time()
-                if covered_turn<-20.0 or covered_turn<340 and covered_turn>335:
+            elif self.manoeuvre_zigzag_20_phase == 1:
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 20, ships_mat)
+                self.t_end_manoeuvre_zigzag_20 = time.time()
+                if covered_turn < -20.0 or covered_turn < 340 and covered_turn > 335:
                     self.manoeuvre_zigzag_20_phase = 2
             elif self.manoeuvre_zigzag_20_phase == 2:
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-                if time.time() - self.t_end_manoeuvre_zigzag_20 > 5.0:
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
+                if time.time() - self.t_end_manoeuvre_zigzag_20 > 10.0:
                     self.manoeuvre = None
 
             self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            -float(ships_mat[2, 0, 3])], environment_variable)
+                            float(ships_mat[2, 0, 3])], environment_variable)
 
     def manoeuvre_astern(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
@@ -527,50 +351,24 @@ class SimpleControls:
 
             self.t_reg = time.time()
             if self.t_start_manoeuvre_astern<2.0:
-                #MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
             else:
-                # MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, -85, -100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, -85, -100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
-
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                # MAIN PORT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(2, 100, 180, ships_mat)
+                # MAIN STARBOARD AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(1, 100, 180, ships_mat)
+                # AFT AZIMUTH THRUSTER
+                self.RT_Evolution_azimuth_thruster_command(0, 100, 180, ships_mat)
                 if ships_mat[0,0,5] <2.0:
                     self.manoeuvre = None
 
             self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            -float(ships_mat[2, 0, 3])], environment_variable)
+                            float(ships_mat[2, 0, 3])], environment_variable)
 
 
     def BORKUM_tuner(self, commands, for_send, ships_mat, thrust_constant, heading_constant, att_heading_constant, manoeuvre):
@@ -580,30 +378,23 @@ class SimpleControls:
             print(manoeuvre)
 
         if self.manoeuvre:
-            environment_variable = 'RPA3' + '_' + self.manoeuvre + '_' + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d')
+            environment_variable = 'RT_Evolution' + '_' + self.manoeuvre + '_' + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d')
 
         if self.manoeuvre==None:
 
             self.t_reg = time.time()
-            #MAIN STARBOARD THRUSTER
-            for_send = self.nmea_make.TRC(2, 85, 100, int(10))
-            self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            write_topic(self.topic_name, for_send)
+            # MAIN PORT AZIMUTH THRUSTER
+            self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+            # for_send = self.nmea_make.TRC(2, 60, 100, 0)
+            # self.SendRPA3.send_string("recieved", for_send, ships_mat)
+            # write_topic(self.topic_name, for_send)
 
-            # MAIN PORT THRUSTER
-            for_send = self.nmea_make.TRC(1, 85, 100, 10)
-            self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            write_topic(self.topic_name, for_send)
+            # MAIN STARBOARD AZIMUTH THRUSTER
+            self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+            # AFT AZIMUTH THRUSTER
+            self.RT_Evolution_azimuth_thruster_command(0, 90, 0, ships_mat)
 
-            # BOW THRUSTER
-            for_send = self.nmea_make.TRC(0, 0, 100, 10)
-            self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            write_topic(self.topic_name, for_send)
 
-            # RUDDERS
-            for_send = self.nmea_make.ROR(int(0), int(0))
-            self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            write_topic(self.topic_name, for_send)
             self.heading_difference_circle_right = ships_mat[0, 0, 7]
             self.heading_difference_circle_left = ships_mat[0, 0, 7]
             self.heading_difference_zigzag_10 = ships_mat[0, 0, 7]
