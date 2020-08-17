@@ -137,7 +137,7 @@ class UDPProcessor():
                 return (for_send, ships_mat)
             if p == '$GORSA':
                 poo =s.split(",")
-                print(poo[3])
+                # print(poo[3])
                 # print(poo)
                 # print(1, poo)
                 # nmea = pynmea2.parse(s)

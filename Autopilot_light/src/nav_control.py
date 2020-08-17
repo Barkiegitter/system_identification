@@ -60,44 +60,9 @@ class SimpleControls:
 
         # PID
         self.turning_right = True
-        self.rudder_pid = PID(0.8,0.000001,100.0) #RPA Sim Settings  only rudder: PID(1.,0.000001,15.0)
-        self.rudder_array = np.zeros(20)
-        self.throttle_pid = PID(25.0,0.5,0.01)       #2.0 0.01 1.0 #PID(5.0,0.2,0.02)
-        self.throttle_array = np.zeros(20)
 
-
-        self.rudder_front_pid = PID(0.2,0.000001,20.0)
-
-
-
-        # self.rudder_pid = PID( 4.5, 4.3, 2.1)
-        # self.rudder_pid = PID( 4.5, 4.3, 2.05) # try this
-        # self.Borkum_type2_pid = PID( 11.0, 6.74, 9.55)
-        # self.Borkum_type2_pid = PID( 11.1, 12.5, 11.5)
-
-        # self.Borkum_type2_pid = PID( 3.75, 3.65, 2.8)
-        self.Borkum_type2_pid = PID(3.75, 3.65, 2.95)
-
-        # self.Borkum_type2_pid_flip = PID( 3.75, 3.65, 2.8)
-        # self.Borkum_type2_pid = PID( 3.9, 0.8, 1)
-        # self.Borkum_type2_pid = PID( 3.9, 0.8, 1)
-
-        # self.Borkum_type2_pid = PID(29.4, 28.3, 21.0) #Not sure
-
-        self.NoPts = True  # this is to deal with the case that the vessel is farther than the waypoint detection range
-
-        # Waypoint radius detection
-        self.radius = 0.001
-        self.rightProp = 100
-        self.leftProp = 100
-        # rudder_servo = 90.0
-        # rudder_nautis = 0.0
         recieved = 0
         ships_mat = 0
-        self.default_throttled =  70
-
-        self.old_heading = 0.0
-        # self.count = 0
 
         for_send = self.nmea_make.ROR(0, 0)
         self.SendArduino.send_string(recieved, for_send, ships_mat)
@@ -112,400 +77,37 @@ class SimpleControls:
         self.line1 = []
         self.line2 = []
 
+        self.manoeuvre = None
+        self.manoeuvre_check = None
 
-
-
-        self.travelled_heading_degrees = 0.0
-        self.heading_difference = 0.0
-
-        self.check_circle_manouevre_right = 0
-
-        self.t_start_manoeuvre = time.time()
-
-        self.initial_manoeuvre = 'none'
+        #circle right
+        self.heading_difference_circle_right = 0.0
+        self.check_circle_manoeuvre_right = 0
         self.t_start_manoeuvre_circle_right = 0.0
-    # self.throttle_test()
-    # self.SimpRudder_test()
-    # time.sleep(1)
+        self.t_end_manoeuvre_circle_right = time.time()
 
-    def SimpRudderPID_RPA(self, recieved, for_send, ships_mat):  # Functions in a class start with lower case
-        if time.time() < self.iter_time + 0.2:
-            # self.log.debug(f'skipping controle {time.time()}')
-            return (for_send, ships_mat)
 
-        self.iter_time = time.time()
+        #circle left
+        self.t_start_manoeuvre_circle_left = 0.0
+        self.check_circle_manoeuvre_left = 0
+        self.heading_difference_circle_left = 0.0
+        self.t_end_manoeuvre_circle_left = time.time()
 
-        lat = ships_mat[0, 0, 2]
-        lng = ships_mat[0, 0, 3]
-        pathLats = ships_mat[1:, 0, 2]
-        pathLngs = ships_mat[1:, 0, 3]
-        heading  = ships_mat[0, 0, 4]
+        #zigzag 10
+        self.t_end_manoeuvre_zigzag_10 = time.time()
+        self.manoeuvre_zigzag_10_phase = 0
 
-        zerolats = np.where(pathLats == 0)[0]
-        if len(zerolats) > 0:
-            # self.log.debug(f"NavControl: No waypoints found {ships_mat[1:, 0, 2]}")
-            return (for_send, ships_mat)
+        # zigzag 20
+        self.t_end_manoeuvre_zigzag_20 = time.time()
+        self.manoeuvre_zigzag_20_phase = 0
 
-        # # self.log.debug(f'nav_control: lat {lat} lng {lng} next_waypoint_x {next_waypoint_y} next_waypoint_y {next_waypoint_x}')
-        angle2waypoint = nt.heading_angle_between_points(lat, lng, ships_mat[1, 0, 2], ships_mat[1, 0, 3])
-        # distance2waypoint = nt.distance(lat, lng, ships_mat[1, 0, 2], ships_mat[1, 0, 3])
+        #astern
 
-        self.rudder_pid.setPoint(angle2waypoint)
-
-        pid_sp = self.rudder_pid.update(heading)
-
-        if angle2waypoint < 0:
-            angle2waypoint = (360 + angle2waypoint)
-
-        map_setpoint = angle2waypoint - heading
-
-        if map_setpoint < 0:
-            map_setpoint = 360 + map_setpoint
-
-        if map_setpoint > 180:
-            map_setpoint = - 360 + map_setpoint
-
-        # self.simple_throttle(map_setpoint)
-        self.static_throttle()
-
-        # self.log.debug(f'nav_control: heading {heading} map_setpoint {map_setpoint} angle2waypoint {angle2waypoint} distance2waypoint {distance2waypoint}')
-
-        if pid_sp < 180 and pid_sp > -180:
-            rudder_servo = nt.map_gk(pid_sp, -180, 180, 40, 140)
-            rudder_nautis = nt.map_gk(pid_sp, -180, 180, -35, 35)
-
-            for_send = self.nmea_make.ROR(round(rudder_nautis, 1), round(rudder_nautis, 1))
-            self.SendRPA3.send_string(recieved, for_send, ships_mat)
-            for_send = self.nmea_make.RSA(round(rudder_nautis, 1), round(rudder_nautis, 1))
-            self.SendAtln.send_string(recieved, for_send, ships_mat)
-
-            for_send = self.nmea_make.ROR(round(rudder_servo, 2), round(rudder_servo, 2))  # +ranint)
-            self.SendArduino.send_string(recieved, for_send, ships_mat)
-        # self.log.debug(f"NavControl: hdg {heading} setp {pid_sp} angle2wp {angle2waypoint} distance2wp {distance2waypoint} rudder_servo {rudder_servo}")
-        # self.log.debug(f"NavControl: Rudder casual {for_send}")
-
-        if pid_sp < -180 or pid_sp > 180:
-
-            rudder_nautis = np.sign(pid_sp) * 35
-            if np.sign(pid_sp) == -1:
-                rudder_servo = 40
-            if np.sign(pid_sp) == 1:
-                rudder_servo = 140
-
-            # self.log.debug(f"black magic {rudder_servo}")
-
-            for_send = self.nmea_make.ROR(round(rudder_nautis, 1), round(rudder_nautis, 1))
-            self.SendRPA3.send_string(recieved, for_send, ships_mat)
-            for_send = self.nmea_make.RSA(round(rudder_nautis, 1), round(rudder_nautis, 1))
-            self.SendAtln.send_string(recieved, for_send, ships_mat)
-            self.SendAtln.send_string(recieved, for_send, ships_mat)
-
-            for_send = self.nmea_make.ROR(round(rudder_servo, 1), round(rudder_servo, 1))
-            self.SendArduino.send_string(recieved, for_send, ships_mat)
-            # self.log.debug(f"nav_control: hdg {heading} setp {pid_sp} angle2wp {angle2waypoint} distance2wp {distance2waypoint} rudder_servo {rudder_servo}")
-            # self.log.debug(f"nav_control: Rudder casual {for_send}")
-            return (for_send, ships_mat)
-
-        return (for_send, ships_mat)
-
-    def SimpleThrottlePID(self, recieved, for_send, ships_mat):
-        if time.time() < self.iter_time + 0.2:
-            # self.log.debug(f'skipping controle {time.time()}')
-            return (for_send, ships_mat)
-
-        return (for_send, ships_mat)
-    
-
-    def SimpRudderPID_BORKUM(self, recieved, for_send, ships_mat):  # Functions in a class start with lower case
-        self.log.debug("SimpRudderPID_BORKUM")
-        if time.time() < self.iter_time + 0.2:
-            # self.log.debug(f'skipping controle {time.time()}')
-            return (for_send, ships_mat)
-
-        # self.iter_time = time.time()
-
-        lat = ships_mat[0, 0, 2]
-        lng = ships_mat[0, 0, 3]
-        heading = ships_mat[0, 0, 4]
-
-        angle2waypoint = nt.heading_angle_between_points(lat, lng, ships_mat[1, 0, 2], ships_mat[1, 0, 3])
-
-        self.rudder_pid.setPoint(angle2waypoint)
-        pid_sp = self.rudder_pid.update(heading)
-
-        if angle2waypoint < 0:
-            angle2waypoint = (360 + angle2waypoint)
-
-        map_setpoint = angle2waypoint - heading
-
-        if map_setpoint < 0:
-            map_setpoint = 360 + map_setpoint
-
-        if map_setpoint > 180:
-            map_setpoint = - 360 + map_setpoint
-
-        self.log.debug(f'SIMPLE nav_control: heading {heading} map_setpoint {map_setpoint} angle2waypoint {angle2waypoint} ')
-        if pid_sp < 180 and pid_sp > -180:
-            rudder_nautis = nt.map_gk(pid_sp, 180, -180, -35, 35)
-
-            for_send = self.nmea_make.TRC(0, self.default_throttled, 100, rudder_nautis.astype('int'))
-            write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(1, self.default_throttled, 100, 0)
-            write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(2, self.default_throttled, 100, 0)
-            write_topic(self.topic_name, for_send)
-            return (for_send, ships_mat)
-
-        if pid_sp < -180 or pid_sp > 180:
-            rudder_nautis = np.sign(pid_sp) * 35 * (-1)
-
-            for_send = self.nmea_make.TRC(0, self.default_throttled, 50, rudder_nautis.astype('int'))
-            write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(1, self.default_throttled, 30, 0)
-            write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(2, self.default_throttled, 10, 0)
-            write_topic(self.topic_name, for_send)
-
-            return (for_send, ships_mat)
-
-        return (for_send, ships_mat)
-    
-    def fx_test(self, recieved, for_send, ships_mat):
-        self.log.debug(f'nav_control: depth {ships_mat[0, 0, 0]}')
-        return (for_send, ships_mat)
-
-
-    def type2_BORKUM(self, recieved, for_send, ships_mat):  # Functions in a class start with lower case
-        # self.Borkum_type2_pid = PID( 3.2, 2.6, 2.3) # Front range is 50 and back range is
-        if time.time() < self.iter_time + 0.2:
-            # self.log.debug(f'skipping controle {time.time()}')
-            return (for_send, ships_mat)
-
-        self.iter_time = time.time()
-
-        lat = ships_mat[0, 0, 2]
-        lng = ships_mat[0, 0, 3]
-        pathLats = ships_mat[1:, 0, 2]
-        pathLngs = ships_mat[1:, 0, 3]
-        heading = ships_mat[0, 0, 4]
-
-        zerolats = np.where(pathLats == 0)[0]
-        # if len(zerolats) > 0:
-        #     self.log.debug("NavControl: No waypoints found")
-        #     return (for_send, ships_mat)
-
-        angle2waypoint = nt.heading_angle_between_points(lat, lng, ships_mat[1, 0, 2], ships_mat[1, 0, 3])
-        # distance2waypoint = nt.distance(lat, lng, ships_mat[1, 0, 2], ships_mat[1, 0, 3])
-
-        self.Borkum_type2_pid.setPoint(angle2waypoint)
-        pid_sp = self.Borkum_type2_pid.update(heading)
-
-        if angle2waypoint < 0:
-            angle2waypoint = (360 + angle2waypoint)
-
-        map_setpoint = angle2waypoint - heading
-
-        if map_setpoint < 0:
-            map_setpoint = 360 + map_setpoint
-
-        if map_setpoint > 180:
-            map_setpoint = - 360 + map_setpoint
-
-        self.log.debug(f'nav_control: heading {heading} map_setpoint {map_setpoint} angle2waypoint {angle2waypoint}, pid_sp={pid_sp}')
-
-        if pid_sp < 180 and pid_sp > -180:
-            # rudder_nautis= nt.map_gk(pid_sp, -180, 180, 145, 210)
-            # rudder_nautis= nt.map_gk(pid_sp, 180, -180, -35, 35)
-            rudder_back = nt.map_gk(pid_sp, -180, 180, -50, 50)
-            rudder_front = nt.map_gk(pid_sp, 180, -180, -33, 33)
-
-            for_send = self.nmea_make.TRC(0, 100, 100, rudder_back)
-            write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(1, 100, 100, rudder_front)
-            write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(2, 100, 100, rudder_front)
-            write_topic(self.topic_name, for_send)
-
-        if pid_sp < -180 or pid_sp > 180:
-            # rudder_back = np.sign(pid_sp) * 50 * (-1)
-            rudder_back = np.sign(pid_sp) * 50
-            rudder_front = np.sign(pid_sp) * 33
-            # rudder_nautis = rudder_nautis
-
-            for_send = self.nmea_make.TRC(0, 100, 50, rudder_back)
-            write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(1, 100, 50, rudder_front)
-            write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(2, 100, 50, rudder_front)
-            write_topic(self.topic_name, for_send)
-
-        self.log.debug("For SEND: ", for_send)
-        # self.log.debug(for_send)
-        return (for_send, ships_mat)
-
-    def type2_BORKUM_flip(self, recieved, for_send, ships_mat):  # Functions in a class start with lower case
-        # self.Borkum_type2_pid = PID( 3.2, 2.6, 2.3) #Front range is 50 and back range is
-        if time.time() < self.iter_time + 0.2:
-            # self.log.debug(f'skipping controle {time.time()}')
-            return (for_send, ships_mat)
-
-        self.iter_time = time.time()
-
-        lat = ships_mat[0, 0, 2]
-        lng = ships_mat[0, 0, 3]
-        pathLats = ships_mat[1:, 0, 2]
-        # self.log.debug(pathLats)
-        pathLngs = ships_mat[1:, 0, 3]
-        heading = ships_mat[0, 0, 4] + 180
-
-        zerolats = np.where(pathLats == 0)[0]
-        # if len(zerolats) > 0:
-        #     self.log.debug("NavControl: No waypoints found")
-        #     return (for_send, ships_mat)
-
-        angle2waypoint = nt.heading_angle_between_points(lat, lng, ships_mat[1, 0, 2], ships_mat[1, 0, 3])
-        # distance2waypoint = nt.distance(lat, lng, ships_mat[1, 0, 2], ships_mat[1, 0, 3])
-
-        self.Borkum_type2_pid.setPoint(angle2waypoint)
-        pid_sp = self.Borkum_type2_pid.update(heading)
-
-        if angle2waypoint < 0:
-            angle2waypoint = (360 + angle2waypoint)
-
-        map_setpoint = angle2waypoint - heading
-
-        if map_setpoint < 0:
-            map_setpoint = 360 + map_setpoint
-
-        if map_setpoint > 180:
-            map_setpoint = - 360 + map_setpoint
-
-        # self.log.debug(f'nav_control: heading {heading} map_setpoint {map_setpoint} angle2waypoint {angle2waypoint}')
-
-        if pid_sp < 180 and pid_sp > -180:
-            # rudder_nautis= nt.map_gk(pid_sp, -180, 180, 145, 210)
-            # rudder_nautis= nt.map_gk(pid_sp, 180, -180, -35, 35)
-            rudder_back = nt.map_gk(pid_sp, -180, 180, -50, 50)
-            rudder_front = nt.map_gk(pid_sp, 180, -180, -33, 33)
-
-            for_send = self.nmea_make.TRC(0, 100, 100, rudder_back + 180)
-            try:
-                write_topic(self.topic_name, for_send)
-            except Exception as e:
-                print(e)
-
-            for_send = self.nmea_make.TRC(1, 100, 100, rudder_front + 180)
-            try:
-                write_topic(self.topic_name, for_send)
-            except Exception as e:
-                print(e)
-
-            for_send = self.nmea_make.TRC(2, 100, 100, rudder_front + 180)
-            try:
-                write_topic(self.topic_name, for_send)
-            except Exception as e:
-                print(e)
-            return (for_send, ships_mat)
-
-        if pid_sp < -180 or pid_sp > 180:
-            rudder_back = np.sign(pid_sp) * 50
-            rudder_front = np.sign(pid_sp) * 33 * (-1)
-            # rudder_nautis = rudder_nautis
-
-            for_send = self.nmea_make.TRC(0, 100, 50, rudder_back + 180)
-            try:
-                write_topic(self.topic_name, for_send)
-            except Exception as e:
-                print(e)
-            # write_topic(self.topic_name, for_send)
-
-            for_send = self.nmea_make.TRC(1, 100, 50, rudder_front + 180)
-            try:
-                write_topic(self.topic_name, for_send)
-            except Exception as e:
-                print(e)
-
-            for_send = self.nmea_make.TRC(2, 100, 50, rudder_front + 180)
-            try:
-                write_topic(self.topic_name, for_send)
-            except Exception as e:
-                print(e)
-
-            return (for_send, ships_mat)
-
-        return (for_send, ships_mat)
-
-    def simple_throttle(self, map_setpoint):
-        recieved = 0
-        ships_mat = 0
-
-        if map_setpoint < 0:
-            self.leftProp = 100
-            self.rightProp = nt.map_gk(map_setpoint, 0, -180, self.leftProp.astype('int'), 100)
-            if self.SendTRC == True:
-                for_send = self.nmea_make.TRC(2, self.rightProp, 100, 0)
-
-                for_send = self.nmea_make.TRC(1, self.leftProp, 100, 0)
-
-        if map_setpoint > 0:
-            self.rightProp = 100
-            self.leftProp = nt.map_gk(map_setpoint, 0, 180, self.rightProp.astype('int'), 100)
-
-            if self.SendTRC == True:
-                for_send = self.nmea_make.TRC(1, self.leftProp, 100, 0)
-                self.SendRPA3.send_string(recieved, for_send, ships_mat)
-
-                for_send = self.nmea_make.TRC(2, self.rightProp, 100, 0)
-                self.SendRPA3.send_string(recieved, for_send, ships_mat)
-
-    def static_throttle(self):
-        recieved = 0
-        ships_mat = 0
-        for_send = self.nmea_make.TRC(2, self.rightProp, 100, 0)
-        self.SendRPA3.send_string(recieved, for_send, ships_mat)
-
-        for_send = self.nmea_make.TRC(1, self.leftProp, 100, 0)
-        self.SendRPA3.send_string(recieved, for_send, ships_mat)
-
-    def SimpRudder_test(self):
-        recieved = 0
-        ships_mat = 0
-        for i in range(179):
-            self.log.debug(f'random_int {i}')
-            for_send = self.nmea_make.ROR(i, i + 1)
-            self.log.debug(f"nav_control: Rudder casual {for_send}")
-            self.SendRPA3.send_string(recieved, for_send, ships_mat)
-            self.SendArduino.send_string(recieved, for_send, ships_mat)
-            time.sleep(0.25)
-
-    # return(for_send, ships_mat)
-
-    def throttle_test(self):
-        recieved = 0
-        ships_mat = 0
-
-        for i in range(30, 80):
-            self.log.debug(f'Throttle test value = {i}')
-            for_send = self.nmea_make.TRC(0, i, 100, 0)
-            self.SendRPA3.send_string(recieved, for_send, ships_mat)
-
-            for_send = self.nmea_make.TRC(1, i, 100, 0)
-            self.SendRPA3.send_string(recieved, for_send, ships_mat)
-
-            time.sleep(0.1)
-
-
-
-
-
+        self.t_start_manoeuvre_circle_right = 0
+        self.t_start_manoeuvre_circle_left = 0
+        self.t_start_manoeuvre_zigzag_10 = 0
+        self.t_start_manoeuvre_zigzag_20 = 0
+        self.t_start_manoeuvre_astern = 0
 
     def write_csv(self, data, name):
         headers = ['time', 'lat', 'lon', 'hdg', 'rpm', 'rsa']
@@ -518,6 +120,8 @@ class SimpleControls:
         with open('example.csv', 'r') as csv_file:
             csv_reader = csv.reader(csv_file)
             return csv_reader[-1]
+
+    #create def function sending commands to ship
 
 
 
@@ -555,10 +159,10 @@ class SimpleControls:
         #initialize and capture current attitude
         if time.time() - self.t_reg >0.2:
             self.t_start_manoeuvre_circle_right = self.t_start_manoeuvre_circle_right + (time.time() - self.t_reg)
-            print(ships_mat[2,0,3])
+
             self.t_reg = time.time()
-            covered_turn = ships_mat[0,0,7] - self.heading_difference
-            # print(ships_mat[0,0,7], self.heading_difference)
+            covered_turn = ships_mat[0,0,7] - self.heading_difference_circle_right
+            print(covered_turn)
             if self.t_start_manoeuvre_circle_right<2.0:
                 #MAIN STARBOARD THRUSTER
                 for_send = self.nmea_make.TRC(2, 85, 100, int(0))
@@ -579,29 +183,33 @@ class SimpleControls:
                 for_send = self.nmea_make.ROR(int(0), int(0))
                 self.SendRPA3.send_string("recieved", for_send, ships_mat)
                 write_topic(self.topic_name, for_send)
-            elif covered_turn>=-10 and covered_turn<=-5 or abs(covered_turn)>350 or self.check_circle_manouevre_right==1 :
-                self.check_circle_manouevre_right = 1
-                # MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+            elif covered_turn>=-10 and covered_turn<=-5 or abs(covered_turn)>350 or self.check_circle_manoeuvre_right==1:
 
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                self.check_circle_manoeuvre_right = 1
+                print(time.time() - self.t_end_manoeuvre_circle_right)
+                if time.time() - self.t_end_manoeuvre_circle_right > 5.0:
+                    self.manoeuvre = None
 
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                else:
+                    # MAIN STARBOARD THRUSTER
+                    for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                    write_topic(self.topic_name, for_send)
 
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                    # MAIN PORT THRUSTER
+                    for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                    write_topic(self.topic_name, for_send)
 
+                    # BOW THRUSTER
+                    for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                    write_topic(self.topic_name, for_send)
 
+                    # RUDDERS
+                    for_send = self.nmea_make.ROR(int(0), int(0))
+                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                    write_topic(self.topic_name, for_send)
             else:
                 #MAIN STARBOARD THRUSTER
                 for_send = self.nmea_make.TRC(2, 85, 100, 0)
@@ -622,22 +230,22 @@ class SimpleControls:
                 for_send = self.nmea_make.ROR(int(35), int(35))
                 self.SendRPA3.send_string("recieved", for_send, ships_mat)
                 write_topic(self.topic_name, for_send)
+                self.t_end_manoeuvre_circle_right = time.time()
 
 
             self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            float(ships_mat[2, 0, 3])], environment_variable)
+                            -float(ships_mat[2, 0, 3])], environment_variable)
 
-            # self.heading_difference = ships_mat[0, 0, 7]
-    def manoeuvre_circle_right(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
+    def manoeuvre_circle_left(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
         #initialize and capture current attitude
         if time.time() - self.t_reg >0.2:
-            self.t_start_manoeuvre_circle_right = self.t_start_manoeuvre_circle_right + (time.time() - self.t_reg)
-            print(ships_mat[2,0,3])
+            self.t_start_manoeuvre_circle_left = self.t_start_manoeuvre_circle_left + (time.time() - self.t_reg)
+            # print(ships_mat[2,0,3])
             self.t_reg = time.time()
-            covered_turn = ships_mat[0,0,7] - self.heading_difference
-            # print(ships_mat[0,0,7], self.heading_difference)
-            if self.t_start_manoeuvre_circle_right<2.0:
+            covered_turn = ships_mat[0,0,7] - self.heading_difference_circle_left
+            print(covered_turn)
+            if self.t_start_manoeuvre_circle_left<2.0:
                 #MAIN STARBOARD THRUSTER
                 for_send = self.nmea_make.TRC(2, 85, 100, int(0))
                 self.SendRPA3.send_string("recieved", for_send, ships_mat)
@@ -657,29 +265,33 @@ class SimpleControls:
                 for_send = self.nmea_make.ROR(int(0), int(0))
                 self.SendRPA3.send_string("recieved", for_send, ships_mat)
                 write_topic(self.topic_name, for_send)
-            elif covered_turn>=-10 and covered_turn<=-5 or abs(covered_turn)>350 or self.check_circle_manouevre_right==1 :
-                self.check_circle_manouevre_right = 1
-                # MAIN STARBOARD THRUSTER
-                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+            elif covered_turn<=10 and covered_turn>=5 or abs(covered_turn)>350 or self.check_circle_manoeuvre_left==1:
+                self.check_circle_manoeuvre_left = 1
+                if time.time() - self.t_end_manoeuvre_circle_left >5.0:
+                    self.manoeuvre = None
 
-                # MAIN PORT THRUSTER
-                for_send = self.nmea_make.TRC(1, 85, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                else:
+                    # MAIN STARBOARD THRUSTER
+                    for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                    write_topic(self.topic_name, for_send)
 
-                # BOW THRUSTER
-                for_send = self.nmea_make.TRC(0, 0, 100, 0)
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                    # MAIN PORT THRUSTER
+                    for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                    write_topic(self.topic_name, for_send)
 
-                # RUDDERS
-                for_send = self.nmea_make.ROR(int(0), int(0))
-                self.SendRPA3.send_string("recieved", for_send, ships_mat)
-                write_topic(self.topic_name, for_send)
+                    # BOW THRUSTER
+                    for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                    write_topic(self.topic_name, for_send)
 
-                #start another timer
+                    # RUDDERS
+                    for_send = self.nmea_make.ROR(int(0), int(0))
+                    self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                    write_topic(self.topic_name, for_send)
+
+                    #start another timer add another iff statement
 
 
             else:
@@ -699,101 +311,279 @@ class SimpleControls:
                 write_topic(self.topic_name, for_send)
 
                 #RUDDERS
-                for_send = self.nmea_make.ROR(int(35), int(35))
+                for_send = self.nmea_make.ROR(int(-35), int(-35))
                 self.SendRPA3.send_string("recieved", for_send, ships_mat)
                 write_topic(self.topic_name, for_send)
+                self.t_end_manoeuvre_circle_left = time.time()
 
 
             self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            float(ships_mat[2, 0, 3])], environment_variable)
-
-    def only_throttle_rudder(self, ships_mat, thrust_constant, heading_constant, att_heading_constant):
-        heading = ships_mat[0, 0, 7]
-        att_heading = ships_mat[0, 0, 4]
-        att_heading = -1*(heading - att_heading)
-
-        # print(heading, att_heading)
-        #time, lat, lon, heading, rpm, rsa
-        # print(1, ships_mat[2, 0, 3])
-        self.write_csv([time.time(), ships_mat[0,0,2], ships_mat[0,0,3],  ships_mat[0,0,7], ships_mat[2,0,2],  float(ships_mat[2,0,3])])      #lat lon 2, 3 rpm rudder angle
-        att_heading = np.sign(att_heading) * (360%att_heading)
-        pid_sp = self.rudder_pid.update_rudder(heading)
-        pid_sp_front = self.rudder_front_pid.update_rudder(att_heading)
-
-        # print(att_heading, pid_sp_front)
-        # if pid_sp < 180 and pid_sp > -180:
-        #     rudder_nautis = nt.map_gk(pid_sp, 180, -180, -35, 35)
-
-        if pid_sp>75.0 :
-            pid_sp=75.0
-        if pid_sp<-75.0:
-            pid_sp = -75.0
-        if pid_sp < -180 or pid_sp > 180:
-            pid_sp = np.sign(pid_sp) * 75.0 #* (-1)
-
-        if pid_sp_front>75.0 :
-            pid_sp_front=75.0
-        if pid_sp_front<-75.0:
-            pid_sp_front = -75.0
-        if pid_sp_front < -180 or pid_sp_front > 180:
-            pid_sp_front = np.sign(pid_sp_front) * 75.0 #* (-1)
-
-        rudder_nautis_front = pid_sp_front
-        rudder_nautis = pid_sp
-        new_throttle = self.throttle_pid.update_speed(ships_mat[0, 0, 5])
-        # print(ships_mat[0, 0, 5])
-        new_throttle = self.throttle_avenger(new_throttle)
-        rudder_nautis = self.rudder_avenger(rudder_nautis)
-
-        # print(rudder_nautis, ships_mat[0,0,4])
-        # new_throttle = 60
-        if new_throttle>100.0:
-            new_throttle = 100.0
+                            -float(ships_mat[2, 0, 3])], environment_variable)
 
 
-        self.rightProp = 100
 
 
-        ################ change here
-        rudder_nautis_front = 0
+    def manoeuvre_zigzag_10(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
-        # self.count  += 1
+        #initialize and capture current attitude
         if time.time() - self.t_reg >0.2:
-            # self.write_csv([heading, att_heading])
-            # print(self.count)
-            # self.count = 0
+            self.t_start_manoeuvre_zigzag_10 = self.t_start_manoeuvre_zigzag_10 + (time.time() - self.t_reg)
+
             self.t_reg = time.time()
-            for_send = self.nmea_make.TRC(2, 0, -100, int(10))  # changed here
-            self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            write_topic(self.topic_name, for_send)
+            covered_turn = ships_mat[0,0,7] - self.heading_difference_zigzag_10
+            print(covered_turn)
+            if self.t_start_manoeuvre_zigzag_10<2.0:
+                #MAIN STARBOARD THRUSTER
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
 
-            self.leftProp = 100
-            for_send = self.nmea_make.TRC(1, 80, 100, 10) # changed here  + 0.5*rudder_nautis
-            self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            write_topic(self.topic_name, for_send)
-            self.backProp = 100
-            for_send = self.nmea_make.TRC(0, 0, 100,10 ) #.astype('int')  -1*(int(rudder_nautis-rudder_nautis_front))
-            self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            write_topic(self.topic_name, for_send)
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(0), int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+            elif self.manoeuvre_zigzag_10_phase == 0:
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(10), int(10))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+                if covered_turn>10.0 or covered_turn>-350 and covered_turn<-345:
+                    self.manoeuvre_zigzag_10_phase = 1
+            elif self.manoeuvre_zigzag_10_phase==1:
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(-10), int(-10))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+                self.t_end_manoeuvre_zigzag_10 = time.time()
+                if covered_turn<-10.0 or covered_turn<350 and covered_turn>345:
+                    self.manoeuvre_zigzag_10_phase = 2
+            elif self.manoeuvre_zigzag_10_phase == 2:
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(0), int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+                if time.time() - self.t_end_manoeuvre_zigzag_10 > 5.0:
+                    self.manoeuvre = None
 
 
-            for_send = self.nmea_make.ROR(int(10), int(10))
-            self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            write_topic(self.topic_name, for_send)
 
+
+            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
+                            -float(ships_mat[2, 0, 3])], environment_variable)
+    def manoeuvre_zigzag_20(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
+
+        #initialize and capture current attitude
+        if time.time() - self.t_reg >0.2:
+            self.t_start_manoeuvre_zigzag_20 = self.t_start_manoeuvre_zigzag_20 + (time.time() - self.t_reg)
+
+            self.t_reg = time.time()
+            covered_turn = ships_mat[0,0,7] - self.heading_difference_zigzag_20
+            print(covered_turn)
+            if self.t_start_manoeuvre_zigzag_20<2.0:
+                #MAIN STARBOARD THRUSTER
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(0), int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+            elif self.manoeuvre_zigzag_20_phase == 0:
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(20), int(20))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+                if covered_turn>20.0 or covered_turn>-340 and covered_turn<-335:
+                    self.manoeuvre_zigzag_20_phase = 1
+            elif self.manoeuvre_zigzag_20_phase==1:
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(-20), int(-20))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+                self.t_end_manoeuvre_zigzag_10 = time.time()
+                if covered_turn<-20.0 or covered_turn<340 and covered_turn>335:
+                    self.manoeuvre_zigzag_20_phase = 2
+            elif self.manoeuvre_zigzag_20_phase == 2:
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(0), int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+                if time.time() - self.t_end_manoeuvre_zigzag_20 > 5.0:
+                    self.manoeuvre = None
+
+            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
+                            -float(ships_mat[2, 0, 3])], environment_variable)
+
+    def manoeuvre_astern(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
+
+        #initialize and capture current attitude
+        if time.time() - self.t_reg >0.2:
+            self.t_start_manoeuvre_astern = self.t_start_manoeuvre_astern + (time.time() - self.t_reg)
+
+            self.t_reg = time.time()
+            if self.t_start_manoeuvre_astern<2.0:
+                #MAIN STARBOARD THRUSTER
+                for_send = self.nmea_make.TRC(2, 85, 100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, 85, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(0), int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+            else:
+                # MAIN STARBOARD THRUSTER
+                for_send = self.nmea_make.TRC(2, -85, -100, int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # MAIN PORT THRUSTER
+                for_send = self.nmea_make.TRC(1, -85, -100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # BOW THRUSTER
+                for_send = self.nmea_make.TRC(0, 0, 100, 0)
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+
+                # RUDDERS
+                for_send = self.nmea_make.ROR(int(0), int(0))
+                self.SendRPA3.send_string("recieved", for_send, ships_mat)
+                write_topic(self.topic_name, for_send)
+                if ships_mat[0,0,5] <2.0:
+                    self.manoeuvre = None
+
+            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
+                            -float(ships_mat[2, 0, 3])], environment_variable)
 
 
     def BORKUM_tuner(self, commands, for_send, ships_mat, thrust_constant, heading_constant, att_heading_constant, manoeuvre):
 
-        if manoeuvre:
-            environment_variable = 'RPA3' + '_' + manoeuvre + '_' + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d')
+        if manoeuvre!=None:
+            self.manoeuvre = manoeuvre
+            print(manoeuvre)
 
-        # print(self.t_start_manoeuvre_circle_right)
-        if manoeuvre=='manoeuvre_circle_right':
-            self.manoeuvre_circle_right(ships_mat, environment_variable)
+        if self.manoeuvre:
+            environment_variable = 'RPA3' + '_' + self.manoeuvre + '_' + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d')
 
-        elif manoeuvre==None:
-            self.t_start_manoeuvre_circle_right = 0
+        if self.manoeuvre==None:
+
             self.t_reg = time.time()
             #MAIN STARBOARD THRUSTER
             for_send = self.nmea_make.TRC(2, 85, 100, int(10))
@@ -814,6 +604,23 @@ class SimpleControls:
             for_send = self.nmea_make.ROR(int(0), int(0))
             self.SendRPA3.send_string("recieved", for_send, ships_mat)
             write_topic(self.topic_name, for_send)
-            self.heading_difference = ships_mat[0, 0, 7]
+            self.heading_difference_circle_right = ships_mat[0, 0, 7]
+            self.heading_difference_circle_left = ships_mat[0, 0, 7]
+            self.heading_difference_zigzag_10 = ships_mat[0, 0, 7]
+            self.heading_difference_zigzag_20 = ships_mat[0, 0, 7]
+
+
+        if self.manoeuvre=='manoeuvre_circle_right':
+            self.manoeuvre_circle_right(ships_mat, environment_variable)
+        if self.manoeuvre=='manoeuvre_circle_left':
+            self.manoeuvre_circle_left(ships_mat, environment_variable)
+        if self.manoeuvre=='manoeuvre_zigzag_10':
+            self.manoeuvre_zigzag_10(ships_mat, environment_variable)
+        if self.manoeuvre=='manoeuvre_zigzag_20':
+            self.manoeuvre_zigzag_20(ships_mat, environment_variable)
+        if self.manoeuvre=='manoeuvre_astern':
+            self.manoeuvre_astern(ships_mat, environment_variable)
+
+
 
         return (for_send, ships_mat)

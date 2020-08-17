@@ -56,7 +56,11 @@ class Kernel:
                 msg, self.largeText2)
             TextRect.center = ((int(x + w / 2)), (int(y + h / 2)))
             if click[0] == 1:
-                self.manoeuvre = msg  # Call the callback function.
+                # self.manoeuvre = msg  # Call the callback function.
+                # return self.constant, self.heading_constant, self.att_hdg, msg
+                return msg
+        return None
+
 
     def text_objects(self, text, font):
         textSurface = font.render(text, True, self.BLACK)
@@ -116,19 +120,29 @@ class Kernel:
             TextSurf, TextRect = self.text_objects(str(self.constant) + '    ' + str(self.heading_constant) + '    ' + str(self.att_hdg), self.largeText2)
             TextRect.center = ((100), (100))
             self.screen.blit(TextSurf, TextRect)
-            self.button("manoeuvre_circle_right", 200, 100, 150, 60, (100, 100, 100), (168, 168, 168))
-            self.button("manoeuvre_circle_left", 200, 200, 150, 60, (100, 100, 100), (168, 168, 168))
-            self.button("manoeuvre_zigzag_10", 200, 300, 150, 60, (100, 100, 100), (168, 168, 168))
-            self.button("manoeuvre_zigzag_20", 200, 400, 150, 60, (100, 100, 100), (168, 168, 168))
-            self.button("manoeuvre_astern", 200, 500, 150, 60, (100, 100, 100), (168, 168, 168))
+            msg = self.button("manoeuvre_circle_right", 200, 100, 150, 60, (100, 100, 100), (168, 168, 168))
+            if msg!=None:
+                return self.constant, self.heading_constant, self.att_hdg, msg
+            msg = self.button("manoeuvre_circle_left", 200, 200, 150, 60, (100, 100, 100), (168, 168, 168))
+            if msg!=None:
+                return self.constant, self.heading_constant, self.att_hdg, msg
+            msg = self.button("manoeuvre_zigzag_10", 200, 300, 150, 60, (100, 100, 100), (168, 168, 168))
+            if msg!=None:
+                return self.constant, self.heading_constant, self.att_hdg, msg
+            msg = self.button("manoeuvre_zigzag_20", 200, 400, 150, 60, (100, 100, 100), (168, 168, 168))
+            if msg!=None:
+                return self.constant, self.heading_constant, self.att_hdg, msg
+            msg = self.button("manoeuvre_astern", 200, 500, 150, 60, (100, 100, 100), (168, 168, 168))
+            if msg!=None:
+                return self.constant, self.heading_constant, self.att_hdg, msg
 
             pygame.display.update()
+        # self.manoeuvre = None
         if self.broadcast:
             return self.constant, self.heading_constant ,self.att_hdg, self.manoeuvre
         else:
             self.broadcast = False
             return self.broadcast_speed, self.broadcast_heading, self.att_hdg, self.manoeuvre
-
 
 
 
