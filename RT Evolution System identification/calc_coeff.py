@@ -16,10 +16,8 @@ df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.
 df_main = df_main.dropna()
 df_main['beta'] = np.degrees(np.arctan((1-ship.w)/(0.7*np.pi*df_main.rpm*ship.D_p)))
 
-#add t here
+#add t here do calc's on angles
 #create thrust of every engine separately
-#calculate fourier coefficients
-
 
 
 

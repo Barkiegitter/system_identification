@@ -6,7 +6,12 @@ import time
 import matplotlib.pyplot as plt
 
 from math import radians, cos, sin, asin, sqrt
-
+###%
+file_path = './Autopilot_light/RT_Evolution_manoeuvre_zigzag_20_2020-08-18.csv'
+df_main = pd.read_csv(file_path, sep=',')
+df_main.columns = ['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
+df_main = df_main.drop_duplicates(subset=['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2'])[1:]
+###%
 def haversine(lon1, lat1, lon2, lat2):
     """
     Calculate the great circle distance between two points
@@ -23,12 +28,14 @@ def haversine(lon1, lat1, lon2, lat2):
     r = 6371 # Radius of earth in kilometers. Use 3956 for miles
     return c * r *1000
 
-df_main = pd.read_csv('test.csv', sep=',')
+# df_main = pd.read_csv('test.csv', sep=',')
 # df_main = df_main[30400:31600].reset_index(inplace=False)
+df_main = df_main.apply(pd.to_numeric, errors='coerce')
+df_main.timestamp = df_main.timestamp.astype(float)*1000000
 df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 
 
-time_begin = df_main.timestamp[0]
+time_begin = df_main.timestamp[1]
 df_main['timestamp_norm'] = df_main.timestamp.apply(lambda x: (x-time_begin).total_seconds())
 df_main.hdg = df_main.hdg + 4.2
 
@@ -39,6 +46,7 @@ df_main.lat = df_main.lat; df_main.lon = df_main.lon
 df_main['x'] = 0.0
 df_main['y'] = 0.0
 df_main['delta_psi'] = 0.0
+df_main = df_main.reset_index(drop=True)
 for i in df_main[1:].index:
     df_main.loc[i, 'x'] = np.sign(df_main.loc[i, 'lon'] - df_main.loc[i - 1, 'lon']) * haversine(df_main.loc[i - 1, 'lon'], df_main.loc[i, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
     df_main.loc[i, 'y'] = np.sign(df_main.loc[i, 'lat'] - df_main.loc[i - 1, 'lat']) * haversine(df_main.loc[i, 'lon'], df_main.loc[i - 1, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
@@ -79,7 +87,10 @@ for state in states:
     P = P - K.dot(H).dot(P)
     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
 new_states = new_states[1:]
+plt.plot(df_main.timestamp.tolist()[:],df_main.x.tolist()[:])
+plt.plot(df_main.timestamp.tolist()[:],new_states[:,0,:])
 
+plt.show()
 df_main.x = new_states[:,0,:] ;df_main.y = new_states[:,1,:] ;df_main.delta_psi = new_states[:,2,:]
 
 
@@ -109,7 +120,7 @@ df_main.r_dot = (df_main.delta_time.shift(3)*df_main.r_dot.shift(3)).rolling(win
 df_main['x_real'] = df_main.x.cumsum()
 df_main['y_real'] = df_main.y.cumsum()
 # plt.plot(df_main.x_real.tolist(), df_main.y_real.tolist())
-plt.plot(df_main.index.tolist(), df_main.u.tolist())
+# plt.plot(df_main.index.tolist(), df_main.u.tolist())
 # plt.plot(df_main.y.tolist())
 # plt.plot(df_main.time.tolist()[:],df_main.y.tolist()[:])
 plt.show()

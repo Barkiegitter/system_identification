@@ -166,7 +166,7 @@ class SimpleControls:
             self.t_start_manoeuvre_circle_right = self.t_start_manoeuvre_circle_right + (time.time() - self.t_reg)
 
             self.t_reg = time.time()
-            covered_turn = ships_mat[0,0,7] - self.heading_difference_circle_right
+            covered_turn = ships_mat[0,0,4] - self.heading_difference_circle_right
             print(covered_turn)
             if self.t_start_manoeuvre_circle_right<2.0:
                 # MAIN PORT AZIMUTH THRUSTER
@@ -199,7 +199,7 @@ class SimpleControls:
                 self.t_end_manoeuvre_circle_right = time.time()
 
 
-            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]), float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 6], ships_mat[2, 0, 7], float(ships_mat[2, 0, 8]),
                             float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])], environment_variable)
 
     def manoeuvre_circle_left(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
@@ -209,7 +209,7 @@ class SimpleControls:
             self.t_start_manoeuvre_circle_left = self.t_start_manoeuvre_circle_left + (time.time() - self.t_reg)
             # print(ships_mat[2,0,3])
             self.t_reg = time.time()
-            covered_turn = ships_mat[0,0,7] - self.heading_difference_circle_left
+            covered_turn = ships_mat[0,0,4] - self.heading_difference_circle_left
             print(covered_turn)
             if self.t_start_manoeuvre_circle_left<2.0:
                 # MAIN PORT AZIMUTH THRUSTER
@@ -306,7 +306,7 @@ class SimpleControls:
             self.t_start_manoeuvre_zigzag_20 = self.t_start_manoeuvre_zigzag_20 + (time.time() - self.t_reg)
 
             self.t_reg = time.time()
-            covered_turn = ships_mat[0, 0, 7] - self.heading_difference_zigzag_20
+            covered_turn = ships_mat[0, 0, 4] - self.heading_difference_zigzag_20
             print(covered_turn)
             if self.t_start_manoeuvre_zigzag_20 < 2.0:
                 # MAIN PORT AZIMUTH THRUSTER
@@ -402,7 +402,7 @@ class SimpleControls:
             # MAIN STARBOARD AZIMUTH THRUSTER
             self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
             # AFT AZIMUTH THRUSTER
-            self.RT_Evolution_azimuth_thruster_command(0, 90, 0, ships_mat)
+            self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
 
 
             self.heading_difference_circle_right = ships_mat[0, 0, 4]

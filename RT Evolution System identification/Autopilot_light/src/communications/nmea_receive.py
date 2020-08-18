@@ -117,25 +117,16 @@ class UDPProcessor():
                 custom = s.split(',')
                 # print(custom)
                 try:
-
                     ships_mat[:, 0, 1] = self.my_mmsi
-                    if custom[1]==0:
+                    if custom[1]=='0':
                         ships_mat[2,:,6] = custom[-1][:-5]
-                        ships_mat[2,:,9] = custom[2]
-                    if custom[1]==1:
+                        ships_mat[2,:,9] = float(custom[2])*266/100
+                    if custom[1]=='1':
                         ships_mat[2,:,7] = custom[-1][:-5]
-                        ships_mat[2, :, 10] = custom[2]
-                    if custom[1]==2:
+                        ships_mat[2, :, 10] = float(custom[2])*266/100
+                    if custom[1]=='2':
                         ships_mat[2,:,8] = custom[-1][:-5]
-                        ships_mat[2, :, 11] = custom[2]
-                    # ships_mat[2, 0, 2] = nmea.data[2]
-                    # ships_mat[2, 0, 3] = nmea.longitude
-                    # ships_mat[2, 0, 5] = nmea.spd_over_grnd * 1.943846
-                    # ships_mat[2, 0, 7] = nmea.true_course
-                    #                   # nmea.rpm
-                    #
-                    # self.rmc_speed = True  # Can use external speed
-
+                        ships_mat[2, :, 11] = float(custom[2])*266/100
 
                 except Exception as e:
                     if self.logging == True:
