@@ -115,7 +115,7 @@ class SimpleControls:
         write_topic(self.topic_name, for_send)
 
     def write_csv(self, data, name):
-        headers = ['time', 'lat', 'lon', 'hdg', 'rpm', 'rsa']
+        headers = ['time', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
         with open(name+'.csv', 'a') as outfile:
             writer = csv.writer(outfile)
             writer.writerow(data)
@@ -162,7 +162,7 @@ class SimpleControls:
     def manoeuvre_circle_right(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
         #initialize and capture current attitude
-        if time.time() - self.t_reg >0.2:
+        if time.time() - self.t_reg >0.1:
             self.t_start_manoeuvre_circle_right = self.t_start_manoeuvre_circle_right + (time.time() - self.t_reg)
 
             self.t_reg = time.time()
@@ -196,16 +196,16 @@ class SimpleControls:
                 self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
                 # AFT AZIMUTH THRUSTER
                 self.RT_Evolution_azimuth_thruster_command(0, 85, -35, ships_mat)
-                self.t_end_manoeuvre_circle_left = time.time()
+                self.t_end_manoeuvre_circle_right = time.time()
 
 
-            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            float(ships_mat[2, 0, 3])], environment_variable)
+            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]), float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+                            float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])], environment_variable)
 
     def manoeuvre_circle_left(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
         #initialize and capture current attitude
-        if time.time() - self.t_reg >0.2:
+        if time.time() - self.t_reg >0.1:
             self.t_start_manoeuvre_circle_left = self.t_start_manoeuvre_circle_left + (time.time() - self.t_reg)
             # print(ships_mat[2,0,3])
             self.t_reg = time.time()
@@ -241,17 +241,18 @@ class SimpleControls:
                 self.RT_Evolution_azimuth_thruster_command(0, 85, 35, ships_mat)
                 self.t_end_manoeuvre_circle_left = time.time()
 
-
-            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            float(ships_mat[2, 0, 3])], environment_variable)
-
+            self.write_csv(
+                [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
+                 float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+                 float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
+                environment_variable)
 
 
 
     def manoeuvre_zigzag_10(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
         #initialize and capture current attitude
-        if time.time() - self.t_reg >0.2:
+        if time.time() - self.t_reg >0.1:
             self.t_start_manoeuvre_zigzag_10 = self.t_start_manoeuvre_zigzag_10 + (time.time() - self.t_reg)
 
             self.t_reg = time.time()
@@ -293,12 +294,15 @@ class SimpleControls:
                 if time.time() - self.t_end_manoeuvre_zigzag_10 > 10.0:
                     self.manoeuvre = None
 
-            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            float(ships_mat[2, 0, 3])], environment_variable)
+            self.write_csv(
+                [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
+                 float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+                 float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
+                environment_variable)
     def manoeuvre_zigzag_20(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
         # initialize and capture current attitude
-        if time.time() - self.t_reg > 0.2:
+        if time.time() - self.t_reg > 0.1:
             self.t_start_manoeuvre_zigzag_20 = self.t_start_manoeuvre_zigzag_20 + (time.time() - self.t_reg)
 
             self.t_reg = time.time()
@@ -340,13 +344,16 @@ class SimpleControls:
                 if time.time() - self.t_end_manoeuvre_zigzag_20 > 10.0:
                     self.manoeuvre = None
 
-            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            float(ships_mat[2, 0, 3])], environment_variable)
+            self.write_csv(
+                [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
+                 float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+                 float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
+                environment_variable)
 
     def manoeuvre_astern(self, ships_mat, environment_variable):   #environment_variable consists out of ship manoeuvre and data
 
         #initialize and capture current attitude
-        if time.time() - self.t_reg >0.2:
+        if time.time() - self.t_reg >0.1:
             self.t_start_manoeuvre_astern = self.t_start_manoeuvre_astern + (time.time() - self.t_reg)
 
             self.t_reg = time.time()
@@ -367,8 +374,11 @@ class SimpleControls:
                 if ships_mat[0,0,5] <2.0:
                     self.manoeuvre = None
 
-            self.write_csv([time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], ships_mat[2, 0, 2],
-                            float(ships_mat[2, 0, 3])], environment_variable)
+            self.write_csv(
+                [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
+                 float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+                 float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
+                environment_variable)
 
 
     def BORKUM_tuner(self, commands, for_send, ships_mat, thrust_constant, heading_constant, att_heading_constant, manoeuvre):
@@ -395,10 +405,10 @@ class SimpleControls:
             self.RT_Evolution_azimuth_thruster_command(0, 90, 0, ships_mat)
 
 
-            self.heading_difference_circle_right = ships_mat[0, 0, 7]
-            self.heading_difference_circle_left = ships_mat[0, 0, 7]
-            self.heading_difference_zigzag_10 = ships_mat[0, 0, 7]
-            self.heading_difference_zigzag_20 = ships_mat[0, 0, 7]
+            self.heading_difference_circle_right = ships_mat[0, 0, 4]
+            self.heading_difference_circle_left = ships_mat[0, 0, 4]
+            self.heading_difference_zigzag_10 = ships_mat[0, 0, 4]
+            self.heading_difference_zigzag_20 = ships_mat[0, 0, 4]
 
 
         if self.manoeuvre=='manoeuvre_circle_right':
