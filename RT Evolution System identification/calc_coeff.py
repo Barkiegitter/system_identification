@@ -21,19 +21,25 @@ def thrust_cone(x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down):
     right_corner = [x_eng + np.sin(np.deg2rad(az_eng - cone_deg/2.))*flow_distance, y_eng + np.cos(np.deg2rad(az_eng - cone_deg/2.))*flow_distance]
     left_corner = [x_eng + np.sin(np.deg2rad(az_eng + cone_deg/2.))*flow_distance, y_eng + np.cos(np.deg2rad(az_eng + cone_deg/2.))*flow_distance]
     triangle_list = [top_corner, right_corner, left_corner]
-
-
     if max([pos[0] for pos in triangle_list])>=x_down>=min([pos[0] for pos in triangle_list]) and max([pos[1] for pos in triangle_list])>=y_down>=min([pos[1] for pos in triangle_list]):
         return 1 * (1-np.deg2rad(abs(azimuth([x_down,y_down],[x_eng, y_eng])-az_eng)))
     else:
         return 0
+
 
 def azimuth(point1, point2):
     angle = np.arctan2(point2[0] - point1[0], point2[1] - point1[1])
     return np.degrees(angle) if angle >= 0 else np.degrees(angle) + 360
     #add thrust fraction here
 
-#add t here do calc's on angles
+def thruster_interaction_coefficient(x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down, az_down):  # give engine number: shipclass engine number
+    thrust_cone_boolean = thrust_cone(x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down)
+    downstream_angle = (az_eng - azimuth([x_eng, y_eng], [x_down, y_down])) * thrust_cone_boolean
+    t_angle = 1 - (np.deg2rad(downstream_angle) ** 2) * 2
+    x_d_ratio = np.sqrt(abs(x_down-x_eng)**2+abs(y_down-y_eng)) / ship.D_p
+    t_engine = (1 - 0.75**(x_d_ratio**(2/3)))*t_angle
+    t = t_engine+(1-t_engine)*((abs(az_eng-az_down)**3)/((130)/t_engine**3) + (abs(az_eng-az_down)**3))
+    return t
 
 
 
@@ -42,40 +48,18 @@ df_main['u_a_2'] = (1-ship.w)*((df_main.u+df_main.r*abs(ship.y_2))*np.cos(np.deg
 df_main['beta_2'] = np.rad2deg(np.arctan2(df_main.u_a_2, (0.7*np.pi*df_main.rpm_2*ship.D_p)))
 df_main['beta_2'] = df_main.beta_2.apply(lambda x: x-360 if x>360 else x)
 
-def thruster_interaction_coefficient(eng_az_1, eng_az_2, t):
-    return t+(1-t)*((abs(eng_az_1-eng_az_2)**3)/((130)/t**3) + (abs(eng_az_1-eng_az_2)**3))
 
-
-
-
-x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down
-
-df_main['t_2'] = df_main.apply(lambda row: thrust_cone(ship.x_2_pos, ship.y_2_pos, row['rsa_2'], 25.0,100, ), thrust_cone(), axis=1)
-df_main['t_2_phi'] =
-df_main['f_p_40_2'] = (1-df_main['t_2_phi'])*(1-w)
+# first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
+df_main['t_21_phi'] =
+df_main['t_20_phi'] =
+df_main['f_p_40_2'] = (df_main['t_2_phi'])*(1-w)
 #u
-#t
-#beta
-#fp
-t_21 = 1-(0.75**(x_12/D_p))
-t_20
+
+
 df_main['beta_0'] = df_main.apply(lambda row: row['beta'] + 180 if row['u']>=0 and row['rpm']<0 else (row['beta'] + 180 if row['u']<0 and row['rpm']<0 else (row['beta'] + 360 if row['u'] <0 and row['rpm']>=0 else row['beta'])), axis=1)
 df_main['beta'] = df_main.beta.apply(lambda x: x-360 if x>360.0 else x)
 df_main['f_p_40'] = (1-ship.t)*ship.beta_coef(df_main.beta)*0.5*ship.rho*(((((1-ship.w)*df_main.u)**2)+ (0.7*np.pi*df_main.rpm*ship.D_p)**2))*np.pi/4*ship.D_p**3
 df_main['f_p_40'] = df_main.apply(lambda row: 0 if row['rpm']<5 and row['rpm']>-5 else row['f_p_40'], axis=1 )
-
-#azimuth 1
-#t
-#u
-#beta
-#fp
-
-
-#azimuth 0
-#t
-#u
-#beta
-#fp
 
 df_main['beta'] = df_main.apply(lambda row: row['beta'] + 180 if row['u']>=0 and row['u']<0 else (row['beta'] + 180 if row['u']<0 and row['rpm']<0 else (row['beta'] + 360 if row['u'] <0 and row['rpm']>=0 else row['beta'])) ,axis=1)
 df_main['beta'] = df_main.beta.apply(lambda x: x-360 if x>360.0 else x)
@@ -139,12 +123,3 @@ plt.show()
 
 
 
-
-# Lasso regression
-# place EOM
-#
-# perform regression
-#
-# recreate model
-#
-# create self iterating improving --> significant corners and rudder deflections

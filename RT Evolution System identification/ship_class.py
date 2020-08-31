@@ -69,7 +69,7 @@ class ship:
         self.alpha_01 = abs(np.arctan(np.rad2deg(self.y_2/(abs(self.x_2)+abs(self.x_0)))))
         self.alpha_02 = abs(np.arctan(np.rad2deg(self.y_2/(abs(self.x_2)+abs(self.x_0)))))
 
-        self.t_12 = 1 - (1-0.75**((self.x_12/self.D_p)**(2/3)))
+        self.t_12 = 1 - (1 - 0.75 ** ((self.x_12 / self.D_p) ** (2 / 3)))
         self.t_21 = 1 - (1 - 0.75 ** ((self.x_21 / self.D_p) ** (2 / 3)))
         self.t_20 = 1 - (1 - 0.75 ** ((self.x_20 / self.D_p) ** (2 / 3))) / (1 - np.deg2rad(self.alpha_20))
         self.t_02 = 1 - (1 - 0.75 ** ((self.x_02 / self.D_p) ** (2 / 3))) / (1 - np.deg2rad(self.alpha_02))
