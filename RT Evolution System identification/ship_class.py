@@ -43,12 +43,13 @@ class ship:
         #dimensions
         self.x_g = 30.8/58*31.95
         self.x_0 = self.x_g - 10/58*31.95
+        self.y_0 = 0.0
         self.x_1 = 44/58*31.95 - self.x_g
         self.y_1 = 5.2/58*31.95
         self.x_2 = 44/58*31.95 - self.x_g
         self.y_2 = -5.2/58*31.95
 
-        self.x_0_pos =  10 / 58 * 31.95 - self.x_g
+        self.x_0_pos = 10 / 58 * 31.95 - self.x_g
         self.y_0_pos = 0.0
         self.x_1_pos = 44 / 58 * 31.95 - self.x_g
         self.y_1_pos = 5.2 / 58 * 31.95

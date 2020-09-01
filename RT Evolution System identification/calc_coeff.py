@@ -41,8 +41,6 @@ def thruster_interaction_coefficient(x_eng, y_eng, az_eng, cone_deg, flow_distan
     t = t_engine+(1-t_engine)*((abs(az_eng-az_down)**3)/((130)/t_engine**3) + (abs(az_eng-az_down)**3))
     return t
 
-
-
 #azimuth 2 port side
 df_main['u_a_2'] = (1-ship.w)*((df_main.u+df_main.r*abs(ship.y_2))*np.cos(np.deg2rad(df_main.rsa_2)) + (df_main.v+df_main.r*abs(ship.x_2))*np.sin(np.deg2rad(df_main.rsa_2)))
 df_main['beta_2'] = np.rad2deg(np.arctan2(df_main.u_a_2, (0.7*np.pi*df_main.rpm_2*ship.D_p)))
@@ -50,8 +48,10 @@ df_main['beta_2'] = df_main.beta_2.apply(lambda x: x-360 if x>360 else x)
 
 
 # first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
-df_main['t_21_phi'] =
-df_main['t_20_phi'] =
+
+df['Value'] = df.apply(lambda row: my_test(row['a'], row['c']), axis=1)
+df_main['t_21_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']))
+df_main['t_20_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_0, ship.y_0, row['rsa_0'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']))
 df_main['f_p_40_2'] = (df_main['t_2_phi'])*(1-w)
 #u
 
