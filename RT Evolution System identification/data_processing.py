@@ -11,7 +11,6 @@ file_path = './Autopilot_light/RT_Evolution_manoeuvre_zigzag_20_2020-08-18.csv'
 df_main = pd.read_csv(file_path, sep=',')
 df_main.columns = ['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
 df_main = df_main.drop_duplicates(subset=['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2'])[1:]
-###%
 def haversine(lon1, lat1, lon2, lat2):
     """
     Calculate the great circle distance between two points
@@ -30,15 +29,15 @@ def haversine(lon1, lat1, lon2, lat2):
 
 # df_main = pd.read_csv('test.csv', sep=',')
 # df_main = df_main[30400:31600].reset_index(inplace=False)
-df_main = df_main.apply(pd.to_numeric, errors='coerce')
-df_main.timestamp = df_main.timestamp.astype(float)*1000000
-df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 
+df_main = df_main.apply(pd.to_numeric, errors='coerce')
+df_main.timestamp = df_main.timestamp*1000000000
+df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 
 time_begin = df_main.timestamp[1]
 df_main['timestamp_norm'] = df_main.timestamp.apply(lambda x: (x-time_begin).total_seconds())
-df_main.hdg = df_main.hdg + 4.2
-
+# df_main.hdg = df_main.hdg + 4.2
+##
 #calculate speeds, ROT, acc.
 
 df_main['delta_time'] = df_main.timestamp_norm.diff()
@@ -61,39 +60,38 @@ for i in df_main[1:].index:
 # df_main.x = df_main.x[df_main.x.between(df_main.x.quantile(.01), df_main.x.quantile(.99))]
 # df_main.y = df_main.y[df_main.y.between(df_main.y.quantile(.01), df_main.y.quantile(.99))]
 # df_main.delta_psi = df_main.delta_psi[df_main.delta_psi.between(df_main.delta_psi.quantile(.01), df_main.delta_psi.quantile(.99))]
-df_main = df_main[abs(df_main.x)<20.0]
-states = df_main[['x', 'y', 'delta_psi']].to_numpy()
-states = states.reshape([states.shape[0], 3, 1])
-# add z score filtering
-
-
-A = np.identity(3)
-P = np.identity(3)*0
-#measurement noise
-Q = np.diag([0.02,0.02,0.06])
-H = np.identity(3)
-R = np.diag([3, 3, 0.8])
-B = 0
-u = 0
-x = inv(H).dot(states[0])
-P = inv(H).dot(R).dot(inv(H.T))
-new_states = np.zeros(shape=[1, 3, 1])
-for state in states:
-    x = A.dot(x)
-    P = A.dot(P).dot(A.T) + Q
-    S = H.dot(P).dot(H.T) + R
-    K = P.dot(H.T).dot(inv(S))
-    x = x + K.dot(state - H.dot(x))
-    P = P - K.dot(H).dot(P)
-    new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
-new_states = new_states[1:]
-plt.plot(df_main.timestamp.tolist()[:],df_main.x.tolist()[:])
-plt.plot(df_main.timestamp.tolist()[:],new_states[:,0,:])
-
-plt.show()
-df_main.x = new_states[:,0,:] ;df_main.y = new_states[:,1,:] ;df_main.delta_psi = new_states[:,2,:]
-
-
+# df_main = df_main[abs(df_main.x)<20.0]
+# states = df_main[['x', 'y', 'delta_psi']].to_numpy()
+# states = states.reshape([states.shape[0], 3, 1])
+# # add z score filtering
+#
+#
+# A = np.identity(3)
+# P = np.identity(3)*0
+# #measurement noise
+# value = 0.2
+# Q = np.diag([0.02,value,0.06])
+# H = np.identity(3)
+# R = np.diag([3, 10, 0.8])
+# B = 0
+# u = 0
+# x = inv(H).dot(states[0])
+# P = inv(H).dot(R).dot(inv(H.T))
+# new_states = np.zeros(shape=[1, 3, 1])
+# for state in states:
+#     x = A.dot(x)
+#     P = A.dot(P).dot(A.T) + Q
+#     S = H.dot(P).dot(H.T) + R
+#     K = P.dot(H.T).dot(inv(S))
+#     x = x + K.dot(state - H.dot(x))
+#     P = P - K.dot(H).dot(P)
+#     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
+# new_states = new_states[1:]
+# plt.plot(df_main.index.tolist()[:],df_main.delta_psi.tolist()[:])
+# plt.plot(df_main.index.tolist()[:],new_states[:,2,:])
+# plt.savefig(str(value)+'kalmantests.png')
+# plt.show()
+# df_main.x = new_states[:,0,:] ;df_main.y = new_states[:,1,:] ;df_main.delta_psi = new_states[:,2,:]
 
 df_main['x_dot'] = df_main.x / df_main.delta_time
 df_main['y_dot'] = df_main.y / df_main.delta_time
@@ -119,11 +117,11 @@ df_main.r_dot = (df_main.delta_time.shift(3)*df_main.r_dot.shift(3)).rolling(win
 
 df_main['x_real'] = df_main.x.cumsum()
 df_main['y_real'] = df_main.y.cumsum()
-# plt.plot(df_main.x_real.tolist(), df_main.y_real.tolist())
+plt.plot(df_main.index.tolist(), df_main.r_dot.tolist())
 # plt.plot(df_main.index.tolist(), df_main.u.tolist())
 # plt.plot(df_main.y.tolist())
 # plt.plot(df_main.time.tolist()[:],df_main.y.tolist()[:])
-plt.show()
+# plt.show()
 df_main.to_csv('test_1.csv', index =False)
 
 
