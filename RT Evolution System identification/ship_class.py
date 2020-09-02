@@ -42,7 +42,7 @@ class ship:
 
         #dimensions
         self.x_g = 30.8/58*31.95
-        self.x_0 = self.x_g - 10/58*31.95
+        self.x_0 =  10/58*31.95 - self.x_g
         self.y_0 = 0.0
         self.x_1 = 44/58*31.95 - self.x_g
         self.y_1 = 5.2/58*31.95

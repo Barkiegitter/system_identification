@@ -5,9 +5,9 @@ import csv
 import time
 import matplotlib.pyplot as plt
 
-from math import radians, cos, sin, asin, sqrt
+# from math import radians, cos, sin, asin, sqrt
 ###%
-file_path = './Autopilot_light/RT_Evolution_manoeuvre_zigzag_20_2020-08-18.csv'
+file_path = './Autopilot_light/RT_Evolution_manoeuvre_circle_right_2020-08-18.csv'
 df_main = pd.read_csv(file_path, sep=',')
 df_main.columns = ['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
 df_main = df_main.drop_duplicates(subset=['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2'])[1:]
@@ -17,13 +17,13 @@ def haversine(lon1, lat1, lon2, lat2):
     on the earth (specified in decimal degrees)
     """
     # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    lon1, lat1, lon2, lat2 = map(np.deg2rad, [lon1, lat1, lon2, lat2])
 
     # haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a))
+    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+    c = 2 * np.arcsin(np.sqrt(a))
     r = 6371 # Radius of earth in kilometers. Use 3956 for miles
     return c * r *1000
 
@@ -41,7 +41,8 @@ df_main['timestamp_norm'] = df_main.timestamp.apply(lambda x: (x-time_begin).tot
 #calculate speeds, ROT, acc.
 
 df_main['delta_time'] = df_main.timestamp_norm.diff()
-df_main.lat = df_main.lat; df_main.lon = df_main.lon
+df_main['dummy'] = df_main.lat
+# df_main.lat = df_main.lon; df_main.lon = df_main.dummy
 df_main['x'] = 0.0
 df_main['y'] = 0.0
 df_main['delta_psi'] = 0.0
@@ -60,7 +61,7 @@ for i in df_main[1:].index:
 # df_main.x = df_main.x[df_main.x.between(df_main.x.quantile(.01), df_main.x.quantile(.99))]
 # df_main.y = df_main.y[df_main.y.between(df_main.y.quantile(.01), df_main.y.quantile(.99))]
 # df_main.delta_psi = df_main.delta_psi[df_main.delta_psi.between(df_main.delta_psi.quantile(.01), df_main.delta_psi.quantile(.99))]
-# df_main = df_main[abs(df_main.x)<20.0]
+# # df_main = df_main[abs(df_main.x)<20.0]
 # states = df_main[['x', 'y', 'delta_psi']].to_numpy()
 # states = states.reshape([states.shape[0], 3, 1])
 # # add z score filtering
@@ -87,19 +88,15 @@ for i in df_main[1:].index:
 #     P = P - K.dot(H).dot(P)
 #     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
 # new_states = new_states[1:]
-# plt.plot(df_main.index.tolist()[:],df_main.delta_psi.tolist()[:])
-# plt.plot(df_main.index.tolist()[:],new_states[:,2,:])
-# plt.savefig(str(value)+'kalmantests.png')
-# plt.show()
 # df_main.x = new_states[:,0,:] ;df_main.y = new_states[:,1,:] ;df_main.delta_psi = new_states[:,2,:]
 
 df_main['x_dot'] = df_main.x / df_main.delta_time
 df_main['y_dot'] = df_main.y / df_main.delta_time
 df_main['delta_psi_dot'] = df_main.delta_psi / df_main.delta_time
 
-df_main['u'] = df_main.apply(lambda row: row.x_dot * cos(radians(row.delta_psi)) + row.y_dot * sin(radians(row.delta_psi)), axis=1)
-df_main['v'] = df_main.apply(lambda row:-row.x_dot * sin(radians(row.delta_psi)) + row.y_dot * cos(radians(row.delta_psi)), axis=1)
-df_main['r'] = df_main.delta_psi_dot.apply(lambda x : radians(x))
+df_main['u'] = df_main.apply(lambda row: row.x_dot * np.sin(np.deg2rad(row.hdg)) + row.y_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
+df_main['v'] = df_main.apply(lambda row: row.y_dot * np.sin(np.deg2rad(row.hdg)) - row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
+df_main['r'] = df_main.delta_psi_dot.apply(lambda x : np.deg2rad(x))
 
 df_main.u = (df_main.delta_time.shift(3)*df_main.u.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
 # plt.plot(df_main.u.tolist()); plt.plot(df_main.u_1.tolist())
@@ -117,11 +114,13 @@ df_main.r_dot = (df_main.delta_time.shift(3)*df_main.r_dot.shift(3)).rolling(win
 
 df_main['x_real'] = df_main.x.cumsum()
 df_main['y_real'] = df_main.y.cumsum()
-plt.plot(df_main.index.tolist(), df_main.r_dot.tolist())
-# plt.plot(df_main.index.tolist(), df_main.u.tolist())
+plt.plot(df_main.index.tolist(), df_main.r.tolist())
+# plt.plot(df_main.index.tolist(), df_main.y.tolist())
+# plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
 # plt.plot(df_main.y.tolist())
-# plt.plot(df_main.time.tolist()[:],df_main.y.tolist()[:])
-# plt.show()
+# plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
+
+plt.show()
 df_main.to_csv('test_1.csv', index =False)
 
 
