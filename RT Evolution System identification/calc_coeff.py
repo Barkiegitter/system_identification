@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 from numpy import newaxis
-from sklearn.linear_model import Lasso
+# from sklearn.linear_model import Lasso
 from sklearn.linear_model import RidgeCV
-from sklearn.linear_model import LassoCV
+# from sklearn.linear_model import LassoCV
 import matplotlib.pyplot as plt
 import math
 
@@ -51,12 +51,15 @@ def thruster_interaction_coefficient(x_eng, y_eng, az_eng, cone_deg, flow_distan
 #azimuth 2 port side
 df_main['u_a_2'] = ((df_main.u+df_main.r*abs(ship.y_2))*np.cos(np.deg2rad(df_main.delta_psi)) + (df_main.v+df_main.r*abs(ship.x_2))*np.sin(np.deg2rad(df_main.delta_psi))) #(1-ship.w)*
 df_main['u_a_1'] = ((df_main.u-df_main.r*abs(ship.y_1))*np.cos(np.deg2rad(df_main.delta_psi)) + (df_main.v-df_main.r*abs(ship.x_1))*np.sin(np.deg2rad(df_main.delta_psi))) #(1-ship.w)*
-df_main['u_a_0'] = ((df_main.u)*np.cos(np.deg2rad(df_main.delta_psi)) + ((df_main.r*abs(ship.x_0))*np.sin(np.deg2rad(df_main.delta_psi))) ) #(1-ship.w)*
+df_main['u_a_0'] = (1-ship.w)*((df_main.u)*np.cos(np.deg2rad(df_main.delta_psi)) + ((df_main.r*abs(ship.x_0))*np.sin(np.deg2rad(df_main.delta_psi))) ) #(1-ship.w)*
 
 df_main['beta_2'] = np.rad2deg(np.arctan2(df_main.u_a_2, (0.7*np.pi*df_main.rpm_2*ship.D_p)))
+df_main['beta_1'] = df_main.apply(lambda row: row['beta_1'] + 180 if row['u_a_1']>=0 and row['u_a_1']<0 else (row['beta_1'] + 180 if row['u_a_1']<0 and row['rpm_1']<0 else (row['beta_1'] + 360 if row['u_a_1'] <0 and row['rpm_1']>=0 else row['beta_1'])) ,axis=1)
+
 df_main['beta_2'] = df_main.beta_2.apply(lambda x: x-360 if x>360 else x)
 
 df_main['beta_1'] = np.rad2deg(np.arctan2(df_main.u_a_1, (0.7*np.pi*df_main.rpm_1*ship.D_p)))
+df_main['beta_1'] = df_main.apply(lambda row: row['beta_1'] + 180 if row['u_a_1']>=0 and row['u_a_1']<0 else (row['beta_1'] + 180 if row['u_a_1']<0 and row['rpm_1']<0 else (row['beta_1'] + 360 if row['u_a_1'] <0 and row['rpm_1']>=0 else row['beta_1'])) ,axis=1)
 df_main['beta_1'] = df_main.beta_1.apply(lambda x: x-360 if x>360 else x)
 
 df_main['beta_0'] = np.rad2deg(np.arctan2(df_main.u_a_0, (0.7*np.pi*df_main.rpm_0*ship.D_p)))
@@ -65,21 +68,24 @@ df_main['beta_0'] = df_main.beta_0.apply(lambda x: x-360 if x>360 else x)
 # first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
 df_main['t_21_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']), axis=1)
 df_main['t_20_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_0, ship.y_0, row['rsa_0'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']), axis=1)
-df_main['f_p_40_2'] = (1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*(1-ship.t)*ship.beta_coef(df_main.beta_2)*0.5*ship.rho*(((((1-ship.w)*df_main.u)**2)+ (0.7*np.pi*df_main.rpm_2*ship.D_p)**2))*np.pi/4*ship.D_p**3
+df_main['f_p_40_2'] = (1-ship.t)*ship.beta_coef(df_main.beta_2)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_2)**2)+ (0.7*np.pi*df_main.rpm_2*ship.D_p)**2))*np.pi/4*ship.D_p**3  #(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*
 ##
 df_main['t_12_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_2, ship.y_2, row['rsa_2'], 25.0, 100.0, ship.x_1, ship.y_1, row['rsa_1']), axis=1)
 df_main['t_10_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_0, ship.y_0, row['rsa_0'], 25.0, 100.0, ship.x_1, ship.y_1, row['rsa_1']), axis=1)
-df_main['f_p_40_1'] = (1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])*(1-ship.t)*ship.beta_coef(df_main.beta_1)*0.5*ship.rho*(((((1-ship.w)*df_main.u)**2)+ (0.7*np.pi*df_main.rpm_1*ship.D_p)**2))*np.pi/4*ship.D_p**3
+df_main['f_p_40_1'] = (1-ship.t)*ship.beta_coef(df_main.beta_1)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_1)**2)+ (0.7*np.pi*df_main.rpm_1*ship.D_p)**2))*np.pi/4*ship.D_p**3  #(1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])*
 
 df_main['t_02_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_2, ship.y_2, row['rsa_2'], 25.0, 100.0, ship.x_0, ship.y_0, row['rsa_0']), axis=1)
 df_main['t_01_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_0, ship.y_0, row['rsa_0']), axis=1)
-df_main['f_p_40_0'] = (1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*(1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u)**2)+ (0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**3
+df_main['f_p_40_0'] = (1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+ (0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**3  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
 
 
 # plt.plot(df_main.index.tolist()[:],df_main.u_a_1.tolist()[:])
-plt.plot(df_main.index.tolist()[:],df_main.t_02_phi.tolist()[:])
+# plt.plot(df_main.index.tolist()[:],df_main.t_02_phi.tolist()[:])
 # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
-# plt.plot(df_main.index.tolist()[:],df_main.u)
+# plt.plot(df_main.index.tolist()[:],df_main.u_a_1)
+plt.plot(df_main.index.tolist()[:],df_main.f_p_40_2)
+plt.plot(df_main.index.tolist()[:],df_main.f_p_40_1)
+plt.plot(df_main.index.tolist()[:],df_main.f_p_40_0)
 
 plt.show()
 
@@ -93,21 +99,28 @@ u_dot = df_main.u_dot.to_numpy()[:,newaxis]
 v_dot = df_main.v_dot.to_numpy()[:,newaxis]
 r_dot = df_main.r_dot.to_numpy()[:,newaxis]
 
-rsa = df_main.rsa.to_numpy()[:, newaxis]
-f_p_40 = df_main.f_p_40.to_numpy()[:,newaxis]
+rsa_0 = df_main.rsa_0.to_numpy()[:, newaxis]
+rsa_1 = df_main.rsa_1.to_numpy()[:, newaxis]
+rsa_2 = df_main.rsa_2.to_numpy()[:, newaxis]
+
+f_p_40_0 = df_main.f_p_40_0.to_numpy()[:,newaxis]
+f_p_40_2 = df_main.f_p_40_2.to_numpy()[:,newaxis]
+f_p_40_1 = df_main.f_p_40_1.to_numpy()[:,newaxis]
+
 
 # X = u uu uuu vv rr vr uvv rvu urr
 # Y = v uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 # N = r uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
-# X = np.concatenate([u_dot, u, u*u, u*v, u*r, u*np.radians(rsa),r*u, np.radians(rsa)*u, v*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
-X = np.concatenate([u_dot, u*u], axis=1)
+# X = np.concatenate([u_dot, u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
+# X = np.concatenate([u_dot, u*u], axis=1)
+X = np.concatenate([u_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 Y = np.concatenate([v_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 N = np.concatenate([r_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
-y_x = ship.Mass*(u_dot-r*v)-2*f_p_40 #- F_r*np.sin(np.radians(rsa))
-y_y = ship.Mass*(v_dot+r*u)-F_r*np.cos(np.radians(rsa))
-y_r = ship.I_e*r_dot + F_r*ship.x_r*np.cos(np.radians(rsa))
-pair = (X,y_x)
+y_x = ship.Mass*(u_dot-r*v)+np.cos(rsa_0)*f_p_40_0+np.cos(rsa_1)*f_p_40_1+np.cos(rsa_2)*f_p_40_2
+y_y = ship.Mass*(v_dot+r*u)+np.sin(rsa_0)*f_p_40_0+np.sin(rsa_1)*f_p_40_1+np.sin(rsa_2)*f_p_40_2
+y_r = ship.I_e*r_dot - abs(ship.y_2)*np.sin(rsa_2)*f_p_40_2 - abs(ship.x_2)*np.cos(rsa_2)*f_p_40_2 + abs(ship.y_1)*np.sin(rsa_1)*f_p_40_1 + abs(ship.x_1)*np.cos(rsa_1)*f_p_40_1 + abs(ship.x_0)*np.cos(rsa_0)*f_p_40_0
+pair = (Y,y_y)
 # for i in np.linspace(0.001, 1.0, num=100, endpoint=False):
 # lasso = Lasso()
 # parameters = {'alpha' : [1e-15, 1e-10, 1e-8, 1e-4, 1e-3, 1e-2, 1, 5, 10, 20]}
@@ -127,17 +140,17 @@ print(train_score)
 
 x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
 
-import numpy as np
-import matplotlib.pyplot as plt
-fig, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-ax1.plot(df_main.lon, df_main.lat, 'g-')
-ax2.plot(df, u_dot, 'b-')
-ax1.set_xlabel('X data')
-ax1.set_ylabel('Y1 data', color='g')
-ax2.set_ylabel('Y2 data', color='b')
-
-plt.show()
+# import numpy as np
+# import matplotlib.pyplot as plt
+# fig, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+# ax1.plot(df_main.lon, df_main.lat, 'g-')
+# ax2.plot(df_main.lon, u_dot, 'b-')
+# ax1.set_xlabel('X data')
+# ax1.set_ylabel('Y1 data', color='g')
+# ax2.set_ylabel('Y2 data', color='b')
+#
+# plt.show()
 
 
 
