@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # from math import radians, cos, sin, asin, sqrt
 ###%
-file_path = './Autopilot_light/RT_Evolution_manoeuvre_circle_right_2020-08-18.csv'
+file_path = './Autopilot_light/RT_Evolution_manoeuvre_zigzag_20_2020-08-18.csv'
 df_main = pd.read_csv(file_path, sep=',')
 df_main.columns = ['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
 df_main = df_main.drop_duplicates(subset=['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2'])[1:]
