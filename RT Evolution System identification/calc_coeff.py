@@ -54,8 +54,7 @@ df_main['u_a_1'] = ((df_main.u-df_main.r*abs(ship.y_1))*np.cos(np.deg2rad(df_mai
 df_main['u_a_0'] = (1-ship.w)*((df_main.u)*np.cos(np.deg2rad(df_main.delta_psi)) + ((df_main.r*abs(ship.x_0))*np.sin(np.deg2rad(df_main.delta_psi))) ) #(1-ship.w)*
 
 df_main['beta_2'] = np.rad2deg(np.arctan2(df_main.u_a_2, (0.7*np.pi*df_main.rpm_2*ship.D_p)))
-df_main['beta_1'] = df_main.apply(lambda row: row['beta_1'] + 180 if row['u_a_1']>=0 and row['u_a_1']<0 else (row['beta_1'] + 180 if row['u_a_1']<0 and row['rpm_1']<0 else (row['beta_1'] + 360 if row['u_a_1'] <0 and row['rpm_1']>=0 else row['beta_1'])) ,axis=1)
-
+df_main['beta_2'] = df_main.apply(lambda row: row['beta_2'] + 180 if row['u_a_2']>=0 and row['u_a_2']<0 else (row['beta_2'] + 180 if row['u_a_2']<0 and row['rpm_2']<0 else (row['beta_2'] + 360 if row['u_a_2'] <0 and row['rpm_2']>=0 else row['beta_2'])) ,axis=1)
 df_main['beta_2'] = df_main.beta_2.apply(lambda x: x-360 if x>360 else x)
 
 df_main['beta_1'] = np.rad2deg(np.arctan2(df_main.u_a_1, (0.7*np.pi*df_main.rpm_1*ship.D_p)))
@@ -63,6 +62,7 @@ df_main['beta_1'] = df_main.apply(lambda row: row['beta_1'] + 180 if row['u_a_1'
 df_main['beta_1'] = df_main.beta_1.apply(lambda x: x-360 if x>360 else x)
 
 df_main['beta_0'] = np.rad2deg(np.arctan2(df_main.u_a_0, (0.7*np.pi*df_main.rpm_0*ship.D_p)))
+df_main['beta_0'] = df_main.apply(lambda row: row['beta_0'] + 180 if row['u_a_0']>=0 and row['u_a_0']<0 else (row['beta_0'] + 180 if row['u_a_0']<0 and row['rpm_0']<0 else (row['beta_0'] + 360 if row['u_a_0'] <0 and row['rpm_0']>=0 else row['beta_0'])) ,axis=1)
 df_main['beta_0'] = df_main.beta_0.apply(lambda x: x-360 if x>360 else x)
 
 # first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
