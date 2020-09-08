@@ -23,7 +23,7 @@ def haversine(lon1, lat1, lon2, lat2):
 # from math import radians, cos, sin, asin, sqrt
 ###%
 
-manoeuvres = ['circle_right', 'circle_left'] #'zigzag_20', 'zigzag_10', 'astern',
+manoeuvres = ['circle_right', 'circle_left', 'zigzag_20', 'zigzag_10', 'astern']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
     file_path = './Autopilot_light/RT_Evolution_manoeuvre_' + manoeuvre + '_2020-08-18.csv'

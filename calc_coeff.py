@@ -12,14 +12,14 @@ ship = ship()
 df_main = pd.read_csv('test_1.csv', sep=',')
 # df_main = df_main[30400:31600].reset_index(inplace=False)
 df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
-
+df_main.rpm = df_main.rpm/60.0
 df_main = df_main.dropna()
 df_main['beta'] = np.degrees(np.arctan((1-ship.w)/(0.7*np.pi*df_main.rpm*ship.D_p)))
 
 
 df_main['beta'] = df_main.apply(lambda row: row['beta'] + 180 if row['u']>=0 and row['u']<0 else (row['beta'] + 180 if row['u']<0 and row['rpm']<0 else (row['beta'] + 360 if row['u'] <0 and row['rpm']>=0 else row['beta'])) ,axis=1)
 df_main['beta'] = df_main.beta.apply(lambda x: x-360 if x>360.0 else x)
-df_main['f_p_40'] = (1-ship.t)*ship.beta_coef(df_main.beta)*0.5*ship.rho*(((((1-ship.w)*df_main.u)**2)+ (0.7*np.pi*df_main.rpm*ship.D_p)**2))*np.pi/4*ship.D_p**3
+df_main['f_p_40'] = (1-ship.t)*ship.beta_coef(df_main.beta)*0.5*ship.rho*(((((1-ship.w)*df_main.u)**2)+ (0.7*np.pi*df_main.rpm*ship.D_p)**2))*np.pi/4*ship.D_p**2
 df_main['f_p_40'] = df_main.apply(lambda row: 0 if row['rpm']<5 and row['rpm']>-5 else row['f_p_40'], axis=1 )
 
 u = df_main.u.to_numpy()[:,newaxis]
@@ -70,7 +70,7 @@ import matplotlib.pyplot as plt
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
 ax1.plot(df_main.lon, df_main.lat, 'g-')
-ax2.plot(df, u_dot, 'b-')
+# ax2.plot(df, u_dot, 'b-')
 ax1.set_xlabel('X data')
 ax1.set_ylabel('Y1 data', color='g')
 ax2.set_ylabel('Y2 data', color='b')
