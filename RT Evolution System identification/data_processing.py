@@ -23,7 +23,7 @@ def haversine(lon1, lat1, lon2, lat2):
 # from math import radians, cos, sin, asin, sqrt
 ###%
 
-manoeuvres = ['circle_right', 'circle_left', 'zigzag_20', 'zigzag_10', 'astern']
+manoeuvres = ['astern', 'zigzag_20', 'zigzag_10', 'circle_right', 'circle_left']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
     file_path = './Autopilot_light/RT_Evolution_manoeuvre_' + manoeuvre + '_2020-08-18.csv'
@@ -55,6 +55,7 @@ for manoeuvre in manoeuvres:
         df_main.loc[i, 'x'] = np.sign(df_main.loc[i, 'lon'] - df_main.loc[i - 1, 'lon']) * haversine(df_main.loc[i - 1, 'lon'], df_main.loc[i, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
         df_main.loc[i, 'y'] = np.sign(df_main.loc[i, 'lat'] - df_main.loc[i - 1, 'lat']) * haversine(df_main.loc[i, 'lon'], df_main.loc[i - 1, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
         if abs(df_main.loc[i,'hdg'] - df_main.loc[i-1,'hdg'])>300.0:
+            print('sadf')
             if df_main.loc[i,'hdg'] > df_main.loc[i-1,'hdg'] :
                 df_main.loc[i, 'delta_psi'] = df_main.loc[i,'hdg'] - 360 - df_main.loc[i-1,'hdg']
             elif df_main.loc[i,'hdg'] < df_main.loc[i-1,'hdg'] :
@@ -99,11 +100,10 @@ for manoeuvre in manoeuvres:
     df_main['delta_psi_dot'] = df_main.delta_psi / df_main.delta_time
 
     df_main['u'] = df_main.apply(lambda row: row.x_dot * np.sin(np.deg2rad(row.hdg)) + row.y_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
-    df_main['v'] = df_main.apply(lambda row: row.y_dot * np.sin(np.deg2rad(row.hdg)) - row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
-    df_main['r'] = df_main.delta_psi_dot.apply(lambda x : np.deg2rad(x))
+    df_main['v'] = df_main.apply(lambda row: -row.y_dot * np.sin(np.deg2rad(row.hdg)) + row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
+    df_main['r'] = df_main.delta_psi_dot.apply(lambda x: np.deg2rad(x))
 
     df_main.u = (df_main.delta_time.shift(3)*df_main.u.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
-    # plt.plot(df_main.u.tolist()); plt.plot(df_main.u_1.tolist())
     df_main.v = (df_main.delta_time.shift(3)*df_main.v.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
     df_main.r = (df_main.delta_time.shift(3)*df_main.r.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
 
