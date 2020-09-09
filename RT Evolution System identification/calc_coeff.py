@@ -48,11 +48,9 @@ def thruster_interaction_coefficient(x_eng, y_eng, az_eng, cone_deg, flow_distan
     else:
         return 1-t
 
-
 df_main.rpm_0 = df_main.rpm_0/60.0
 df_main.rpm_1 = df_main.rpm_1/60.0
 df_main.rpm_2 = df_main.rpm_2/60.0
-
 
 #azimuth 2 port side
 df_main['u_a_2'] = (1-ship.w)*((-df_main.u-df_main.r*abs(ship.y_2))*np.cos(np.deg2rad(df_main.rsa_2)) + (-df_main.v-df_main.r*abs(ship.x_2))*np.sin(np.deg2rad(df_main.rsa_2))) #(1-ship.w)*
@@ -98,7 +96,7 @@ df_main['f_p_40_0'] = (1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*((1-ship.t
 # plt.plot(df_main.index.tolist()[:],df_main.beta_1)
 # plt.plot(df_main.index.tolist()[:],- abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1))
 #
-# plt.show()
+plt.show()
 
 u = df_main.u.to_numpy()[:,newaxis]
 v = df_main.v.to_numpy()[:,newaxis]

@@ -54,7 +54,7 @@ for manoeuvre in manoeuvres:
     for i in df_main[1:].index:
         df_main.loc[i, 'x'] = np.sign(df_main.loc[i, 'lon'] - df_main.loc[i - 1, 'lon']) * haversine(df_main.loc[i - 1, 'lon'], df_main.loc[i, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
         df_main.loc[i, 'y'] = np.sign(df_main.loc[i, 'lat'] - df_main.loc[i - 1, 'lat']) * haversine(df_main.loc[i, 'lon'], df_main.loc[i - 1, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
-        if abs(df_main.loc[i,'hdg'] - df_main.loc[i-1,'hdg'])>300.0:
+        if abs(df_main.loc[i,'hdg'] - df_main.loc[i-1,'hdg'])>360.0:
             print('sadf')
             if df_main.loc[i,'hdg'] > df_main.loc[i-1,'hdg'] :
                 df_main.loc[i, 'delta_psi'] = df_main.loc[i,'hdg'] - 360 - df_main.loc[i-1,'hdg']
@@ -65,35 +65,38 @@ for manoeuvre in manoeuvres:
 
     # df_main.x = df_main.x[df_main.x.between(df_main.x.quantile(.01), df_main.x.quantile(.99))]
     # df_main.y = df_main.y[df_main.y.between(df_main.y.quantile(.01), df_main.y.quantile(.99))]
-    # df_main.delta_psi = df_main.delta_psi[df_main.delta_psi.between(df_main.delta_psi.quantile(.01), df_main.delta_psi.quantile(.99))]
-    # # df_main = df_main[abs(df_main.x)<20.0]
-    # states = df_main[['x', 'y', 'delta_psi']].to_numpy()
-    # states = states.reshape([states.shape[0], 3, 1])
-    # # add z score filtering
-    #
-    #
-    # A = np.identity(3)
-    # P = np.identity(3)*0
-    # #measurement noise
-    # value = 0.2
-    # Q = np.diag([0.02,value,0.06])
-    # H = np.identity(3)
-    # R = np.diag([3, 10, 0.8])
-    # B = 0
-    # u = 0
-    # x = inv(H).dot(states[0])
-    # P = inv(H).dot(R).dot(inv(H.T))
-    # new_states = np.zeros(shape=[1, 3, 1])
-    # for state in states:
-    #     x = A.dot(x)
-    #     P = A.dot(P).dot(A.T) + Q
-    #     S = H.dot(P).dot(H.T) + R
-    #     K = P.dot(H.T).dot(inv(S))
-    #     x = x + K.dot(state - H.dot(x))
-    #     P = P - K.dot(H).dot(P)
-    #     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
-    # new_states = new_states[1:]
-    # df_main.x = new_states[:,0,:] ;df_main.y = new_states[:,1,:] ;df_main.delta_psi = new_states[:,2,:]
+    # df_main.delta_psi = df_main.delta_psi[df_main.delta_psi.between(df_main.delta_psi.quantile(.01), df_main.delta_psi.quantile(.999999))]
+    df_main = df_main[abs(df_main.delta_psi)<20.0]
+
+
+
+
+    states = df_main[['x', 'y', 'delta_psi']].to_numpy()
+    states = states.reshape([states.shape[0], 3, 1])
+    # add z score filtering
+    A = np.identity(3)
+    P = np.identity(3)*0
+    #measurement noise
+    value = 0.2
+    Q = np.diag([0.02,value,0.06])
+    H = np.identity(3)
+    R = np.diag([3, 10, 10.0])
+    B = 0
+    u = 0
+    x = inv(H).dot(states[0])
+    P = inv(H).dot(R).dot(inv(H.T))
+    new_states = np.zeros(shape=[1, 3, 1])
+    for state in states:
+        x = A.dot(x)
+        P = A.dot(P).dot(A.T) + Q
+        S = H.dot(P).dot(H.T) + R
+        K = P.dot(H.T).dot(inv(S))
+        x = x + K.dot(state - H.dot(x))
+        P = P - K.dot(H).dot(P)
+        new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
+    new_states = new_states[1:]
+    # df_main.x = new_states[:,0,:] ;df_main.y = new_states[:,1,:] ;
+    df_main.delta_psi = new_states[:,2,:]
 
     df_main['x_dot'] = df_main.x / df_main.delta_time
     df_main['y_dot'] = df_main.y / df_main.delta_time
@@ -119,7 +122,7 @@ for manoeuvre in manoeuvres:
     df_main['x_real'] = df_main.x.cumsum()
     df_main['y_real'] = df_main.y.cumsum()
     # plt.plot(df_main.index.tolist(), df_main.r.tolist())
-    plt.plot(df_main.index.tolist(), df_main.v.tolist())
+    plt.plot(df_main.index.tolist(), df_main.delta_psi.tolist())
     # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
     # plt.plot(df_main.y.tolist())
     # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
