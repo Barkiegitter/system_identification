@@ -127,7 +127,7 @@ N = np.concatenate([r_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, a
 y_x = ship.Mass*(u_dot-r*v)+np.cos(np.deg2rad(rsa_0))*abs(f_p_40_0)+np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1)+np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2)
 y_y = ship.Mass*(v_dot+r*u)-np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0)-np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1)-np.sin(np.deg2rad(rsa_2))*abs(f_p_40_2)   #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
 y_r = ship.I_e*r_dot - abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1)
-pair = (N, y_r)
+pair = (Y, y_y)
 # for i in np.linspace(0.001, 1.0, num=100, endpoint=False):
 # lasso = Lasso()
 # parameters = {'alpha' : [1e-15, 1e-10, 1e-8, 1e-4, 1e-3, 1e-2, 1, 5, 10, 20]}
@@ -143,7 +143,7 @@ print(train_score)
 
 x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
 
-# import numpy as np
+# import numpy as npz
 # import matplotlib.pyplot as plt
 # fig, ax1 = plt.subplots()
 # ax2 = ax1.twinx()
