@@ -1,6 +1,10 @@
 import numpy as np
 from ship_class import ship
+import math
 
+# read coef from csv
+coef_ = np.genfromtxt('foo.csv', delimiter=',')
+ship = ship()
 def thrust_cone(x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down):
     #check axis!!!!!!! coherent to choosen axis system
     top_corner = [y_eng, x_eng]
@@ -38,18 +42,25 @@ def manoeuvre_model_rt_evolution(u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, r
     u_a_1 = (1 - ship.w) * ((-u + r * abs(ship.y_1)) * np.cos(np.deg2rad(rsa_1)) + ( -v - r * abs(ship.x_1)) * np.sin(np.deg2rad(rsa_1))) 
     u_a_0 = (1 - ship.w) * (u * -1 * np.cos(np.deg2rad(rsa_0)) + ((-v + r * abs(ship.x_0)) * np.sin(np.deg2rad(rsa_0))))
 
+
     beta_2 = np.rad2deg(np.arctan((u_a_2) / (0.7 * np.pi * rpm_2 * ship.D_p)))
+
     if beta_2<0:
         beta_2 = beta_2 + 360.
+    elif math.isnan(beta_2):
+        beta_2 = 0
 
     beta_1 = np.rad2deg(np.arctan((u_a_1) / (0.7 * np.pi * rpm_1 * ship.D_p)))
     if beta_1 < 0:
         beta_1 = beta_1 + 360.
+    elif math.isnan(beta_1):
+        beta_1 = 0
 
     beta_0 = np.rad2deg(np.arctan((u_a_0) / (0.7 * np.pi * rpm_0 * ship.D_p)))
     if beta_0 < 0:
         beta_0 = beta_0 + 360.
-
+    elif math.isnan(beta_0):
+        beta_0 = 0
     # first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
     t_21_phi = thruster_interaction_coefficient(ship.x_1, ship.y_1, rsa_1, 25.0, 100.0, ship.x_2, ship.y_2, rsa_2)
     t_20_phi = thruster_interaction_coefficient(ship.x_0, ship.y_0, rsa_0, 25.0, 100.0, ship.x_2, ship.y_2, rsa_2)
@@ -69,7 +80,10 @@ def manoeuvre_model_rt_evolution(u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, r
     # precalculate all values raised to powers or those with less than 5 chained multiplications (don't use numpy for this part)
     # https://stackoverflow.com/questions/18453771/why-is-x3-slower-than-xxx/18453999#18453999
 
-    i_t = 1
+    # i_t = 1
+    # X = np.concatenate(
+    #     [u_dot, u * v, u * r, u * u * r, u * u * v, v * v * v, r * r * r, r * r * v, v * v * r, abs(v) * v, abs(r) * v,
+    #      r * abs(v), abs(r) * r], axis=1)
 
     u2 = u ** 2
     u3 = u * u * u
@@ -81,53 +95,61 @@ def manoeuvre_model_rt_evolution(u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, r
     abs_v = abs(v)
     abs_r = abs(r)
     # surge
-    surge_partial_force = (surge_coeff[1] * u2 +
-                           surge_coeff[2] * u3 +
-                           surge_coeff[3] * v2 +
-                           surge_coeff[4] * r2 +
-                           surge_coeff[5] * v * r +
-                           surge_coeff[6] * u * v2 +
-                           surge_coeff[7] * rvu +
-                           surge_coeff[8] * u * r2
-                           )
-    u_accel = (surge_partial_force + vessel_mass_kg_m * r * v + (2 * F_p_4Q * i_t + 2 * F_p * (1 - i_t))) / (
-            vessel_mass_kg_m - surge_coeff[0])
+    surge_partial_force = (coef_[0][1] * u * v +
+                          coef_[0][2] * u * r +
+                          coef_[0][3] * (u2) * r +
+                          coef_[0][4] * (u2) * v +
+                          coef_[0][5] * (v3) +
+                          coef_[0][6] * r3 +
+                          coef_[0][7] * (r2) * v +
+                          coef_[0][8] * (v2) * r +
+                          coef_[0][9] * abs_v * v +
+                          coef_[0][10] * abs_r * v +
+                          coef_[0][11] * abs_v * r +
+                          coef_[0][12] * abs_r * r
+                          )
+
+
+    u_accel = (surge_partial_force + r * v * ship.Mass - (np.cos(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) + np.cos(np.deg2rad(rsa_1)) * abs(
+        f_p_4Q_1) + np.cos(np.deg2rad(rsa_2)) * abs(f_p_4Q_2)))/ship.Mass
+
 
     # print(f'u {u}, v {v}, r {r} , surge_1_5 {surge_partial_force} )
 
-    sway_partial_force = (sway_coeff[1] * u * v +
-                          sway_coeff[2] * u * r +
-                          sway_coeff[3] * (u2) * r +
-                          sway_coeff[4] * (u2) * v +
-                          sway_coeff[5] * (v3) +
-                          sway_coeff[6] * r3 +
-                          sway_coeff[7] * (r2) * v +
-                          sway_coeff[8] * (v2) * r +
-                          sway_coeff[9] * abs_v * v +
-                          sway_coeff[10] * abs_r * v +
-                          sway_coeff[11] * abs_v * r +
-                          sway_coeff[12] * abs_r * r
+    sway_partial_force = (coef_[1][1] * u * v +
+                          coef_[1][2] * u * r +
+                          coef_[1][3] * (u2) * r +
+                          coef_[1][4] * (u2) * v +
+                          coef_[1][5] * (v3) +
+                          coef_[1][6] * r3 +
+                          coef_[1][7] * (r2) * v +
+                          coef_[1][8] * (v2) * r +
+                          coef_[1][9] * abs_v * v +
+                          coef_[1][10] * abs_r * v +
+                          coef_[1][11] * abs_v * r +
+                          coef_[1][12] * abs_r * r
                           )
-    v_accel = (sway_partial_force + F_r - vessel_mass_kg_m * r * u) / (vessel_mass_kg_m - sway_coeff[0])
+    v_accel = (sway_partial_force - ship.Mass * r * u - 1 * (- np.sin(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) - np.sin(np.deg2rad(rsa_1)) * abs(
+        f_p_4Q_1) - np.sin(np.deg2rad(rsa_2)) * abs(f_p_4Q_2))) / (ship.Mass)
 
-    force_partial = (rot_coeff[1] * u * v +
-                     rot_coeff[2] * u * r +
-                     rot_coeff[3] * (u2) * r +
-                     rot_coeff[4] * (u2) * v +
-                     rot_coeff[5] * (v3) +
-                     rot_coeff[6] * r3 +
-                     rot_coeff[7] * (r2) * v +
-                     rot_coeff[8] * (v2) * r +
-                     rot_coeff[9] * abs_v * v +
-                     rot_coeff[10] * abs_r * v +
-                     rot_coeff[11] * abs_v * r +
-                     rot_coeff[12] * abs_r * r -
-                     F_r * rudder_dist_cog_m_x_r)
+    force_partial = (coef_[2][1] * u * v +
+                     coef_[2][2] * u * r +
+                     coef_[2][3] * (u2) * r +
+                     coef_[2][4] * (u2) * v +
+                     coef_[2][5] * (v3) +
+                     coef_[2][6] * r3 +
+                     coef_[2][7] * (r2) * v +
+                     coef_[2][8] * (v2) * r +
+                     coef_[2][9] * abs_v * v +
+                     coef_[2][10] * abs_r * v +
+                     coef_[2][11] * abs_v * r +
+                     coef_[2][12] * abs_r * r )
 
-    r_accel = force_partial / (moi_kgm3_I_zz - rot_coeff[0])
+    r_accel = (force_partial -1 * (- abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_4Q_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_4Q_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_4Q_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_4Q_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_4Q_1)))/ (ship.I_z)
 
     # Calculating distance covered during this time iterval (using velocity from last interval)
     delta_x_0 = (u * np.cos(np.deg2rad(heading)) - v * np.sin(np.deg2rad(heading))) * dt
+
     delta_y_0 = (v * np.cos(np.deg2rad(heading)) + u * np.sin(np.deg2rad(heading))) * dt
     delta_r_0 = r * dt  # radians turned in the existing time step
 
@@ -135,5 +157,8 @@ def manoeuvre_model_rt_evolution(u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, r
     next_u = u + u_accel * dt
     next_v = v + v_accel * dt
     next_r = r + r_accel * dt
-
+    print(delta_x_0,f_p_4Q_0)
+    # v_accel = (sway_partial_force - ship.Mass * r * u - 1 * (
+    #             - np.sin(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) - np.sin(np.deg2rad(rsa_1)) * abs(
+    #         f_p_4Q_1) - np.sin(np.deg2rad(rsa_2)) * abs(f_p_4Q_2))) / (ship.Mass)
     return next_u, next_v, next_r, delta_x_0, delta_y_0, delta_r_0, u_accel, v_accel, r_accel

@@ -127,23 +127,30 @@ N = np.concatenate([r_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, a
 y_x = ship.Mass*(u_dot-r*v)+np.cos(np.deg2rad(rsa_0))*abs(f_p_40_0)+np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1)+np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2)
 y_y = ship.Mass*(v_dot+r*u)-np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0)-np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1)-np.sin(np.deg2rad(rsa_2))*abs(f_p_40_2)   #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
 y_r = ship.I_e*r_dot - abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1)
-pair = (Y, y_y)
-# for i in np.linspace(0.001, 1.0, num=100, endpoint=False):
-# lasso = Lasso()
-# parameters = {'alpha' : [1e-15, 1e-10, 1e-8, 1e-4, 1e-3, 1e-2, 1, 5, 10, 20]}
-# lasso_regressor = GridSearchCV(lasso, parameters, cv=1000) #, scoring='neg_mean_squared_error'
-# lasso_regressor.fit(pair[0], pair[1])
-# print(lasso_regressor.best_params_)
-# print(lasso_regressor.best_score_)
-#
+
+
+
+
+pair = (X, y_x)
+
 lasso = RidgeCV()
 lasso.fit(pair[0], pair[1] )
 train_score=lasso.score(pair[0], pair[1])
 print(train_score)
 
-x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
 
-# import numpy as npz
+array_export = pairs = [(X, y_x, 'X'), (Y, y_y, 'Y'), (N, y_r, 'N')]
+lasso_X = RidgeCV()
+lasso_X.fit(X, y_x)
+lasso_Y = RidgeCV()
+lasso_Y.fit(Y, y_y)
+lasso_N = RidgeCV()
+lasso_N.fit(N, y_r)
+a = np.asarray([ lasso_X.coef_[0], lasso_Y.coef_[0], lasso_N.coef_[0] ])
+np.savetxt("foo.csv", a, delimiter=",")
+
+# import numpy as np
+# x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
 # import matplotlib.pyplot as plt
 # fig, ax1 = plt.subplots()
 # ax2 = ax1.twinx()
@@ -159,4 +166,11 @@ x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
 # build model like mikhail
 # think of algorithm to improve MSE with iteration between engine param and hydrocoefficients (including randomizer)
 
-
+# for i in np.linspace(0.001, 1.0, num=100, endpoint=False):
+# lasso = Lasso()
+# parameters = {'alpha' : [1e-15, 1e-10, 1e-8, 1e-4, 1e-3, 1e-2, 1, 5, 10, 20]}
+# lasso_regressor = GridSearchCV(lasso, parameters, cv=1000) #, scoring='neg_mean_squared_error'
+# lasso_regressor.fit(pair[0], pair[1])
+# print(lasso_regressor.best_params_)
+# print(lasso_regressor.best_score_)
+#
