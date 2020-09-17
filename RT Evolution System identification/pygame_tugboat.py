@@ -8,6 +8,8 @@ Created on Thu Sep 10 13:39:01 2020
 import pygame
 import manoeuvre_model_evo
 import time
+from manoeuvre_model_evo import ship_model
+model = ship_model()
 
 class Kernel:
     def __init__(self, settings):
@@ -22,16 +24,12 @@ class Kernel:
 
         self.spawn_location = (500,500)
 
-        
         self.tugboat_img = pygame.image.load('tugboat.png')
         self.tugboat_img = pygame.transform.scale(self.tugboat_img, self.scale_image)
-
 
         self.rpm_const = 2.0
         self.az_angle = 180.
         print(self.tugboat_img.get_rect())
-
-
 
         self.t_reg = time.time()
         self.x = 0.0
@@ -43,8 +41,6 @@ class Kernel:
         self.u_dot = 0.0
         self.v_dot = 0.0
         self.r_dot = 0.0
-
-
 
 
 
@@ -61,7 +57,7 @@ class Kernel:
             return None
     def main_loop(self):
         dt = time.time() - self.t_reg
-        if dt>1.0:
+        if dt>0.5:
             self.t_reg = time.time()
             for event in pygame.event.get():
 
@@ -84,9 +80,9 @@ class Kernel:
                     if event.key == pygame.K_RIGHT:
                         self.az_angle = self.az_angle - 10.0
 
-                self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = manoeuvre_model_evo.manoeuvre_model_rt_evolution(self.u, self.v, self.r, self.heading,
+                self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = model.manoeuvre_model_rt_evolution(self.u, self.v, self.r, self.heading,
                                                                                                                                                                self.rpm_const, self.rpm_const, self.rpm_const,
-                                                                                                                                                               self.az_angle, 180., 180., dt)
+                                                                                                                                                               180., 180., 180., dt)
                 self.x = self.x + delta_x_0
                 self.y = self.y + delta_y_0
                 self.heading = self.heading + delta_r_0

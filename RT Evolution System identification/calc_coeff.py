@@ -87,7 +87,6 @@ df_main['t_02_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient
 df_main['t_01_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_0, ship.y_0, row['rsa_0']), axis=1)
 df_main['f_p_40_0'] = (1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+ (0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
 
-
 # plt.plot(df_main.index.tolist()[:],df_main.u_a_1.tolist()[:])
 # plt.plot(df_main.index.tolist()[:],df_main.t_02_phi.tolist()[:])
 # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
@@ -95,7 +94,7 @@ df_main['f_p_40_0'] = (1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*((1-ship.t
 # plt.plot(df_main.index.tolist()[:],df_main.beta_2)
 # plt.plot(df_main.index.tolist()[:],df_main.beta_1)
 # plt.plot(df_main.index.tolist()[:],- abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1))
-#
+
 plt.show()
 
 u = df_main.u.to_numpy()[:,newaxis]
@@ -114,7 +113,6 @@ f_p_40_0 = df_main.f_p_40_0.to_numpy()[:,newaxis]
 f_p_40_2 = df_main.f_p_40_2.to_numpy()[:,newaxis]
 f_p_40_1 = df_main.f_p_40_1.to_numpy()[:,newaxis]
 
-
 # X = u uu uuu vv rr vr uvv rvu urr
 # Y = v uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 # N = r uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
@@ -128,16 +126,12 @@ y_x = ship.Mass*(u_dot-r*v)+np.cos(np.deg2rad(rsa_0))*abs(f_p_40_0)+np.cos(np.de
 y_y = ship.Mass*(v_dot+r*u)-np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0)-np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1)-np.sin(np.deg2rad(rsa_2))*abs(f_p_40_2)   #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
 y_r = ship.I_e*r_dot - abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1)
 
-
-
-
 pair = (X, y_x)
 
 lasso = RidgeCV()
 lasso.fit(pair[0], pair[1] )
 train_score=lasso.score(pair[0], pair[1])
 print(train_score)
-
 
 array_export = pairs = [(X, y_x, 'X'), (Y, y_y, 'Y'), (N, y_r, 'N')]
 lasso_X = RidgeCV()
@@ -161,7 +155,6 @@ np.savetxt("foo.csv", a, delimiter=",")
 # ax2.set_ylabel('Y2 data', color='b')
 #
 # plt.show()
-
 
 # build model like mikhail
 # think of algorithm to improve MSE with iteration between engine param and hydrocoefficients (including randomizer)
