@@ -131,7 +131,7 @@ pair = (X, y_x)
 lasso = RidgeCV()
 lasso.fit(pair[0], pair[1] )
 train_score=lasso.score(pair[0], pair[1])
-print(train_score)
+
 
 array_export = pairs = [(X, y_x, 'X'), (Y, y_y, 'Y'), (N, y_r, 'N')]
 lasso_X = RidgeCV()
@@ -140,6 +140,7 @@ lasso_Y = RidgeCV()
 lasso_Y.fit(Y, y_y)
 lasso_N = RidgeCV()
 lasso_N.fit(N, y_r)
+print(lasso_N.score(N, y_r))
 a = np.asarray([ lasso_X.coef_[0], lasso_Y.coef_[0], lasso_N.coef_[0] ])
 np.savetxt("foo.csv", a, delimiter=",")
 

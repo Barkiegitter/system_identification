@@ -55,31 +55,34 @@ class Kernel:
             return mouse[0], mouse[1]
         else:
             return None
+
     def main_loop(self):
         dt = time.time() - self.t_reg
-        if dt>0.5:
-            self.t_reg = time.time()
-            for event in pygame.event.get():
 
-                if event.type == pygame.QUIT:
-                    pygame.display.quit()
-                    pygame.quit()
-                if self.button():
-                    None
+        for event in pygame.event.get():
 
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        self.rpm_const = self.rpm_const + 1.0
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                pygame.quit()
+            if self.button():
+                None
 
-                    if event.key == pygame.K_DOWN:
-                        self.rpm_const = self.rpm_const - 1.0
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self.rpm_const = self.rpm_const + 1.0
 
-                    if event.key == pygame.K_LEFT:
-                        self.az_angle = self.az_angle + 10.0
+                if event.key == pygame.K_DOWN:
+                    self.rpm_const = self.rpm_const - 1.0
 
-                    if event.key == pygame.K_RIGHT:
-                        self.az_angle = self.az_angle - 10.0
+                if event.key == pygame.K_LEFT:
+                    self.az_angle = self.az_angle + 10.0
 
+                if event.key == pygame.K_RIGHT:
+                    self.az_angle = self.az_angle - 10.0
+
+
+            if dt>0.5:
+                self.t_reg = time.time()
                 self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = model.manoeuvre_model_rt_evolution(self.u, self.v, self.r, self.heading,
                                                                                                                                                                self.rpm_const, self.rpm_const, self.rpm_const,
                                                                                                                                                                180., 180., 180., dt)
@@ -90,15 +93,12 @@ class Kernel:
                     self.heading = self.heading - 360
                 if self.heading<0.0:
                     self.heading = self.heading + 360
-                # print(delta_x_0)
+            # print(delta_x_0)
 
-            self.screen.fill(self.bg_color)
-            self.update_tugboat_img(self.spawn_location[0], self.spawn_location[1])
-            pygame.display.update()
-        else:
-            self.screen.fill(self.bg_color)
-            self.update_tugboat_img(self.spawn_location[0], self.spawn_location[1])
-            pygame.display.update()
+        self.screen.fill(self.bg_color)
+        self.update_tugboat_img(self.spawn_location[0], self.spawn_location[1])
+        pygame.display.update()
+
     
 settings = None
 if __name__ == '__main__':

@@ -124,8 +124,8 @@ class ship_model():
     # X = np.concatenate([u_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
     
-        self.u_dot = (-surge_partial_force - r * v * ship.Mass -1 * (np.cos(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) + np.cos(np.deg2rad(rsa_1)) * abs(
-            f_p_4Q_1) + np.cos(np.deg2rad(rsa_2)) * abs(f_p_4Q_2)))/ (ship.Mass+coef_[0][0])
+        self.u_dot = (-surge_partial_force - r * v * ship.Mass - 1 * (np.cos(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) + np.cos(np.deg2rad(rsa_1)) * abs(
+            f_p_4Q_1) + np.cos(np.deg2rad(rsa_2)) * abs(f_p_4Q_2)))/ (ship.Mass)
     
     
         # print(f'u {u}, v {v}, r {r} , surge_1_5 {surge_partial_force} )
@@ -144,11 +144,11 @@ class ship_model():
                               coef_[1][11] * abs_v * r +
                               coef_[1][12] * abs_r * r
                               )
-        self.v_dot = (sway_partial_force - ship.Mass * r * u - 1 * (- np.sin(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) - np.sin(np.deg2rad(rsa_1)) * abs(
+        self.v_dot = (-sway_partial_force - ship.Mass * r * u - 1 * (- np.sin(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) - np.sin(np.deg2rad(rsa_1)) * abs(
             f_p_4Q_1) - np.sin(np.deg2rad(rsa_2)) * abs(f_p_4Q_2))) / (ship.Mass)
     
-        force_partial = (coef_[2][0]*self.r_dot+
-                            coef_[2][1] * u * v +
+        force_partial = (coef_[2][0]* self.r_dot +
+                         coef_[2][1] * u * v +
                          coef_[2][2] * u * r +
                          coef_[2][3] * (u2) * r +
                          coef_[2][4] * (u2) * v +
@@ -161,7 +161,7 @@ class ship_model():
                          coef_[2][11] * abs_v * r +
                          coef_[2][12] * abs_r * r )
     
-        self.r_dot = (force_partial -1 * (- abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_4Q_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_4Q_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_4Q_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_4Q_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_4Q_1)))/ (ship.I_z)
+        self.r_dot = (-force_partial -1 * (- abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_4Q_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_4Q_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_4Q_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_4Q_2) - abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_4Q_1)))/ (ship.I_z)
     
         # Calculating distance covered during this time iterval (using velocity from last interval)
         delta_x_0 = (u * np.cos(np.deg2rad(heading)) - v * np.sin(np.deg2rad(heading))) * dt
@@ -173,7 +173,7 @@ class ship_model():
         next_u = u + self.u_dot * dt
         next_v = v + self.v_dot * dt
         next_r = r + self.r_dot * dt
-        print(r,v, surge_partial_force)
+        print(u,v,r, surge_partial_force,sway_partial_force, force_partial)
         # v_accel = (sway_partial_force - ship.Mass * r * u - 1 * (
         #             - np.sin(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) - np.sin(np.deg2rad(rsa_1)) * abs(
         #         f_p_4Q_1) - np.sin(np.deg2rad(rsa_2)) * abs(f_p_4Q_2))) / (ship.Mass)
