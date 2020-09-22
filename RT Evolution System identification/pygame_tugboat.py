@@ -27,15 +27,15 @@ class Kernel:
         self.tugboat_img = pygame.image.load('tugboat.png')
         self.tugboat_img = pygame.transform.scale(self.tugboat_img, self.scale_image)
 
-        self.rpm_const = 2.0
+        self.rpm_const = 0.0001
         self.az_angle = 180.
         print(self.tugboat_img.get_rect())
 
         self.t_reg = time.time()
         self.x = 0.0
         self.y = 0.0
-        self.heading = 0.0
-        self.u = 0.0
+        self.heading = 10.0
+        self.u = 5.0
         self.v = 0.0
         self.r = 0.0
         self.u_dot = 0.0
@@ -81,18 +81,18 @@ class Kernel:
                     self.az_angle = self.az_angle - 10.0
 
 
-            if dt>0.5:
-                self.t_reg = time.time()
-                self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = model.manoeuvre_model_rt_evolution(self.u, self.v, self.r, self.heading,
-                                                                                                                                                               self.rpm_const, self.rpm_const, self.rpm_const,
-                                                                                                                                                               180., 180., 180., dt)
-                self.x = self.x + delta_x_0
-                self.y = self.y + delta_y_0
-                self.heading = self.heading + delta_r_0
-                if self.heading>360.0:
-                    self.heading = self.heading - 360
-                if self.heading<0.0:
-                    self.heading = self.heading + 360
+            # if dt>0.5:
+            self.t_reg = time.time()
+            self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = model.manoeuvre_model_rt_evolution(self.u, self.v, self.r, self.heading,
+                                                                                                                                                           self.rpm_const, self.rpm_const, self.rpm_const,
+                                                                                                                                                           180., 180., 180., dt)
+            self.x = self.x + delta_x_0
+            self.y = self.y + delta_y_0
+            self.heading = self.heading + delta_r_0
+            if self.heading>360.0:
+                self.heading = self.heading - 360
+            if self.heading<0.0:
+                self.heading = self.heading + 360
             # print(delta_x_0)
 
         self.screen.fill(self.bg_color)
