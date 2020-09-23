@@ -23,7 +23,10 @@ def haversine(lon1, lat1, lon2, lat2):
 # from math import radians, cos, sin, asin, sqrt
 ###%
 
-manoeuvres = ['zigzag_20' , 'zigzag_10', 'circle_right', 'circle_left','astern']
+MA_ = 9
+MA_bound = int(MA_/2) -1
+
+manoeuvres = ['circle_left','astern','zigzag_20' , 'zigzag_10', 'circle_right']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
     file_path = './Autopilot_light/RT_Evolution_manoeuvre_' + manoeuvre + '_2020-08-18.csv'
@@ -77,9 +80,9 @@ for manoeuvre in manoeuvres:
     A = np.identity(3)
     P = np.identity(3)*0
     #measurement noise
-    Q = np.diag([0.002,0.2,0.06])
+    Q = np.diag([0.02,0.2,0.006])
     H = np.identity(3)
-    R = np.diag([1, 4.0, 1.0])
+    R = np.diag([0.5, 4.0, 1.0])
     B = 0
     u = 0
     x = inv(H).dot(states[0])
@@ -95,13 +98,13 @@ for manoeuvre in manoeuvres:
         new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
     new_states = new_states[1:]
 
-    plt.plot(df_main.delta_psi.tolist())
+    # plt.plot(df_main.x.tolist())
     df_main.x = new_states[:, 0, :];
     df_main.y = new_states[:, 1, :];
     df_main.delta_psi = new_states[:, 2, :]
-    plt.plot(new_states[:,2,:])
-
-    plt.show()
+    # plt.plot(new_states[:,0,:])
+    #
+    # plt.show()
 
     df_main['x_dot'] = df_main.x / df_main.delta_time
     df_main['y_dot'] = df_main.y / df_main.delta_time
@@ -111,9 +114,12 @@ for manoeuvre in manoeuvres:
     df_main['v'] = df_main.apply(lambda row: -row.y_dot * np.sin(np.deg2rad(row.hdg)) + row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
     df_main['r'] = df_main.delta_psi_dot.apply(lambda x: np.deg2rad(x))
 
-    # df_main.u = (df_main.delta_time.shift(3)*df_main.u.shift(3)).rolling(window=200).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
-    # df_main.v = (df_main.delta_time.shift(3)*df_main.v.shift(3)).rolling(window=200).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
-    # df_main.r = (df_main.delta_time.shift(3)*df_main.r.shift(3)).rolling(window=200).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
+
+
+
+    df_main.u = (df_main.delta_time.shift(MA_bound)*df_main.u.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+    df_main.v = (df_main.delta_time.shift(MA_bound)*df_main.v.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+    df_main.r = (df_main.delta_time.shift(MA_bound)*df_main.r.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
     # states = df_main[['u', 'v', 'r']][1:].to_numpy()
     # states = states.reshape([states.shape[0], 3, 1])
     # # add z score filtering

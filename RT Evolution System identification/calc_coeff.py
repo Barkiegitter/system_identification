@@ -123,8 +123,8 @@ Y = np.concatenate([v_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, a
 N = np.concatenate([r_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
 y_x = ship.Mass*(u_dot-r*v)+1*(np.cos(np.deg2rad(rsa_0))*abs(f_p_40_0)+np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1)+np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2))
-y_y = ship.Mass*(v_dot+r*u)-np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0)-np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1)-np.sin(np.deg2rad(rsa_2))*abs(f_p_40_2)   #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
-y_r = ship.I_e*r_dot - abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1)
+y_y = ship.Mass*(v_dot+r*u)-1*(np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0)+np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1)+np.sin(np.deg2rad(rsa_2))*abs(f_p_40_2)) #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
+y_r = ship.I_e*r_dot -1*(abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) - abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) - abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) - abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1))
 
 pair = (X, y_x)
 
@@ -140,7 +140,7 @@ lasso_Y = RidgeCV()
 lasso_Y.fit(Y, y_y)
 lasso_N = RidgeCV()
 lasso_N.fit(N, y_r)
-print(lasso_X.score(X, y_x))
+print(lasso_N.score(N, y_r))
 a = np.asarray([ np.concatenate([lasso_X.coef_[0],np.zeros(len(lasso_Y.coef_[0])-len(lasso_X.coef_[0]))]), lasso_Y.coef_[0], lasso_N.coef_[0] ])
 np.savetxt("foo.csv", a, delimiter=",")
 

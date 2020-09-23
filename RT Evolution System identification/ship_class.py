@@ -29,7 +29,7 @@ class ship:
         self.B = 12.6
         self.Disp = 581.14
         self.T = 6.25/58*31.95
-        self.rho = 1029
+        self.rho = 1029.
         self.v_max = 12.5*0.5144
         self.C_b = self.Disp/(self.L_fl*self.T*self.B)
         self.Mass = self.Disp*self.rho
