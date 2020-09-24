@@ -390,25 +390,25 @@ class SimpleControls:
         if self.manoeuvre:
             environment_variable = 'RT_Evolution' + '_' + self.manoeuvre + '_' + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d')
 
-        if self.manoeuvre==None:
-
-            self.t_reg = time.time()
-            # MAIN PORT AZIMUTH THRUSTER
-            self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
-            # for_send = self.nmea_make.TRC(2, 60, 100, 0)
-            # self.SendRPA3.send_string("recieved", for_send, ships_mat)
-            # write_topic(self.topic_name, for_send)
-
-            # MAIN STARBOARD AZIMUTH THRUSTER
-            self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
-            # AFT AZIMUTH THRUSTER
-            self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
-
-
-            self.heading_difference_circle_right = ships_mat[0, 0, 4]
-            self.heading_difference_circle_left = ships_mat[0, 0, 4]
-            self.heading_difference_zigzag_10 = ships_mat[0, 0, 4]
-            self.heading_difference_zigzag_20 = ships_mat[0, 0, 4]
+        # if self.manoeuvre==None:
+        #
+        #     self.t_reg = time.time()
+        #     # MAIN PORT AZIMUTH THRUSTER
+        #     self.RT_Evolution_azimuth_thruster_command(2, 85, 0, ships_mat)
+        #     # for_send = self.nmea_make.TRC(2, 60, 100, 0)
+        #     # self.SendRPA3.send_string("recieved", for_send, ships_mat)
+        #     # write_topic(self.topic_name, for_send)
+        #
+        #     # MAIN STARBOARD AZIMUTH THRUSTER
+        #     self.RT_Evolution_azimuth_thruster_command(1, 85, 0, ships_mat)
+        #     # AFT AZIMUTH THRUSTER
+        #     self.RT_Evolution_azimuth_thruster_command(0, 85, 0, ships_mat)
+        #
+        #
+        #     self.heading_difference_circle_right = ships_mat[0, 0, 4]
+        #     self.heading_difference_circle_left = ships_mat[0, 0, 4]
+        #     self.heading_difference_zigzag_10 = ships_mat[0, 0, 4]
+        #     self.heading_difference_zigzag_20 = ships_mat[0, 0, 4]
 
 
         if self.manoeuvre=='manoeuvre_circle_right':
@@ -422,6 +422,10 @@ class SimpleControls:
         if self.manoeuvre=='manoeuvre_astern':
             self.manoeuvre_astern(ships_mat, environment_variable)
 
-
+        self.write_csv(
+            [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
+             float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+             float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
+            'all')
 
         return (for_send, ships_mat)

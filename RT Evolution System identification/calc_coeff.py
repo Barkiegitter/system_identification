@@ -140,7 +140,7 @@ lasso_Y = RidgeCV()
 lasso_Y.fit(Y, y_y)
 lasso_N = RidgeCV()
 lasso_N.fit(N, y_r)
-print(lasso_N.score(N, y_r))
+print(lasso_X.score(X, y_x))
 a = np.asarray([ np.concatenate([lasso_X.coef_[0],np.zeros(len(lasso_Y.coef_[0])-len(lasso_X.coef_[0]))]), lasso_Y.coef_[0], lasso_N.coef_[0] ])
 np.savetxt("foo.csv", a, delimiter=",")
 

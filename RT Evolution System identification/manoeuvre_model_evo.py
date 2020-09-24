@@ -17,6 +17,8 @@ class ship_model():
         self.u_dot_1 = 0.0
         self.v_dot = 0.0
         self.r_dot = 0.0
+        self.u_dot_array = np.zeros(3)
+
         
     def thrust_cone(self, x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down):
         #check axis!!!!!!! coherent to choosen axis system
@@ -49,6 +51,14 @@ class ship_model():
             return 0
         else:
             return 1-t
+
+
+    def acc_avenger(self, acc):
+        self.u_dot_array = np.roll(self.u_dot_array, 1)
+        self.u_dot_array[0] = acc
+        return np.average(self.u_dot_array)
+
+
     def manoeuvre_model_rt_evolution(self, u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt):  #rpm in per second!
 
         u_a_2 = (1 - ship.w) * ((-u - r * abs(ship.y_2)) * np.cos(np.deg2rad(rsa_2)) + ( -v - r * abs(ship.x_2)) * np.sin(np.deg2rad(rsa_2)))
@@ -127,7 +137,7 @@ class ship_model():
         #                       coef_[0][11] * abs_v * r +
         #                       coef_[0][12] * abs_r * r
         #                       )
-        surge_partial_force = (#coef_[0][0] * self.u_dot +
+        surge_partial_force = (#coef_[0][0] * self.acc_avenger(self.u_dot) +
                                coef_[0][1] * u +
                                coef_[0][2] * u * u +
                                coef_[0][3] * u*u*u +
@@ -163,7 +173,7 @@ class ship_model():
                               )
         self.v_dot = (sway_partial_force - ship.Mass * r * u - 1 * (np.sin(np.deg2rad(rsa_0))*abs(f_p_4Q_0)+np.sin(np.deg2rad(rsa_1))*abs(f_p_4Q_1)+np.sin(np.deg2rad(rsa_2))*abs(f_p_4Q_2)))/(ship.Mass)
     
-        force_partial = (coef_[2][0]* self.r_dot +
+        force_partial = (#coef_[2][0]* self.r_dot +
                          coef_[2][1] * u * v +
                          coef_[2][2] * u * r +
                          coef_[2][3] * (u2) * r +
@@ -195,6 +205,6 @@ class ship_model():
         #             - np.sin(np.deg2rad(rsa_0)) * abs(f_p_4Q_0) - np.sin(np.deg2rad(rsa_1)) * abs(
         #         f_p_4Q_1) - np.sin(np.deg2rad(rsa_2)) * abs(f_p_4Q_2))) / (ship.Mass)
 
-        print(rsa_0)
+        # print(rsa_0)
 
         return next_u, next_v, next_r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot

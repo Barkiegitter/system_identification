@@ -27,9 +27,11 @@ MA_ = 9
 MA_bound = int(MA_/2) -1
 
 manoeuvres = ['circle_left','astern','zigzag_20' , 'zigzag_10', 'circle_right']
+manoeuvres = ['all']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
-    file_path = './Autopilot_light/RT_Evolution_manoeuvre_' + manoeuvre + '_2020-08-18.csv'
+    # file_path = './Autopilot_light/RT_Evolution_manoeuvre_' + manoeuvre + '_2020-08-18.csv'
+    file_path = './Autopilot_light/' + 'all.csv'
     df_main = pd.read_csv(file_path, sep=',')
     df_main.columns = ['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
     df_main = df_main.drop_duplicates(subset=['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2'])[1:]
@@ -44,6 +46,8 @@ for manoeuvre in manoeuvres:
     time_begin = df_main.timestamp[1]
     df_main['timestamp_norm'] = df_main.timestamp.apply(lambda x: (x-time_begin).total_seconds())
     # df_main.hdg = df_main.hdg + 4.2
+    df_main = df_main[10:]
+    df_main = df_main.iloc[::2]
     ##
     #calculate speeds, ROT, acc.
 
@@ -98,13 +102,13 @@ for manoeuvre in manoeuvres:
         new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
     new_states = new_states[1:]
 
-    # plt.plot(df_main.x.tolist())
+    plt.plot(df_main.x.tolist())
     df_main.x = new_states[:, 0, :];
     df_main.y = new_states[:, 1, :];
     df_main.delta_psi = new_states[:, 2, :]
-    # plt.plot(new_states[:,0,:])
+    plt.plot(new_states[:,0,:])
     #
-    # plt.show()
+    plt.show()
 
     df_main['x_dot'] = df_main.x / df_main.delta_time
     df_main['y_dot'] = df_main.y / df_main.delta_time
@@ -162,13 +166,13 @@ for manoeuvre in manoeuvres:
 
     df_main['x_real'] = df_main.x.cumsum()
     df_main['y_real'] = df_main.y.cumsum()
-    plt.plot(df_main.index.tolist(), df_main.u.tolist())
+    # plt.plot(df_main.index.tolist(), df_main.u.tolist())
     # plt.plot(df_main.index.tolist(), df_main.x.tolist())
     # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
     # plt.plot(df_main.y.tolist())
     # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
 
-    plt.show()
+    # plt.show()
     df_all = pd.concat([df_all, df_main], axis=0)
 df_all.to_csv('test_1.csv', index =False)
 
