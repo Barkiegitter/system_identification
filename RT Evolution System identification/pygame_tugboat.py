@@ -28,7 +28,7 @@ class Kernel:
         self.tugboat_img = pygame.transform.scale(self.tugboat_img, self.scale_image)
 
         self.rpm_const = 0.0
-        self.az_angle = 180.
+        self.az_angle = 0.
         print(self.tugboat_img.get_rect())
 
         self.t_reg = time.time()
@@ -58,15 +58,17 @@ class Kernel:
 
     def main_loop(self):
         dt = time.time() - self.t_reg
-        self.t_reg = time.time()
-        self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = model.manoeuvre_model_rt_evolution(
-            self.u, self.v, self.r, self.heading,
-            self.rpm_const, self.rpm_const, self.rpm_const,
-            180., 180., 180., dt)
-        self.x = self.x + delta_x_0
-        self.y = self.y + delta_y_0
-        self.heading = self.heading + delta_r_0
-
+        
+        if dt>0.05:
+            self.t_reg = time.time()
+            self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = model.manoeuvre_model_rt_evolution(
+                self.u, self.v, self.r, self.heading,
+                self.rpm_const, self.rpm_const, self.rpm_const,
+                180., 180., 180., dt)
+            self.x = self.x + delta_x_0
+            self.y = self.y + delta_y_0
+            self.heading = self.heading + delta_r_0
+            # print(self.x, self.y)
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -98,7 +100,7 @@ class Kernel:
                 self.heading = self.heading + 360
 
         # if dt>0.5:
-        print(self.x, self.u_dot)
+        
             # self.t_reg = time.time()
         self.screen.fill(self.bg_color)
         self.update_tugboat_img(self.spawn_location[0], self.spawn_location[1])

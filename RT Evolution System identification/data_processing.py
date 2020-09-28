@@ -23,8 +23,13 @@ def haversine(lon1, lat1, lon2, lat2):
 # from math import radians, cos, sin, asin, sqrt
 ###%
 
-MA_ = 9
+MA_ = 17
 MA_bound = int(MA_/2) -1
+
+
+MA_acc = 25
+MA_bound_acc = int(MA_/2) -1
+
 
 manoeuvres = ['circle_left','astern','zigzag_20' , 'zigzag_10', 'circle_right']
 manoeuvres = ['all']
@@ -48,6 +53,7 @@ for manoeuvre in manoeuvres:
     # df_main.hdg = df_main.hdg + 4.2
     df_main = df_main[10:]
     df_main = df_main.iloc[::2]
+    # df_main = df_main[0:4000]
     ##
     #calculate speeds, ROT, acc.
 
@@ -77,7 +83,7 @@ for manoeuvre in manoeuvres:
 
 
 
-
+    
     states = df_main[['x', 'y', 'delta_psi']].to_numpy()
     states = states.reshape([states.shape[0], 3, 1])
     # add z score filtering
@@ -102,13 +108,13 @@ for manoeuvre in manoeuvres:
         new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
     new_states = new_states[1:]
 
-    plt.plot(df_main.x.tolist())
+    # plt.plot(df_main.x.tolist())
     df_main.x = new_states[:, 0, :];
     df_main.y = new_states[:, 1, :];
     df_main.delta_psi = new_states[:, 2, :]
-    plt.plot(new_states[:,0,:])
+    # plt.plot(new_states[:,0,:])
     #
-    plt.show()
+    # plt.show()
 
     df_main['x_dot'] = df_main.x / df_main.delta_time
     df_main['y_dot'] = df_main.y / df_main.delta_time
@@ -124,15 +130,17 @@ for manoeuvre in manoeuvres:
     df_main.u = (df_main.delta_time.shift(MA_bound)*df_main.u.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
     df_main.v = (df_main.delta_time.shift(MA_bound)*df_main.v.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
     df_main.r = (df_main.delta_time.shift(MA_bound)*df_main.r.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+    
+    # df_main = df_main[35:]
     # states = df_main[['u', 'v', 'r']][1:].to_numpy()
     # states = states.reshape([states.shape[0], 3, 1])
     # # add z score filtering
     # A = np.identity(3)
     # P = np.identity(3) * 0
     # # measurement noise
-    # Q = np.diag([1, 1, 1])
+    # Q = np.diag([0.05, 0.05, 0.05])
     # H = np.identity(3)
-    # R = np.diag([1, 1, 1])
+    # R = np.diag([5., 2., 1.])
     # B = 0
     # u = 0
     # x = inv(H).dot(states[0])
@@ -147,26 +155,60 @@ for manoeuvre in manoeuvres:
     #     P = P - K.dot(H).dot(P)
     #     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
     # new_states = new_states[1:]
-    # # plt.plot(df_main.u.tolist())
+    # # plt.plot(df_main.r.tolist()[1000:2000])
     # df_main.u.values[1:] = new_states[:, 0, :][0];
     # df_main.v.values[1:] = new_states[:, 1, :][0];
-    # df_main.r.values[1:] = new_states[:, 2, :][0]
-    # # plt.plot(new_states[:,0,:])
+    # # df_main.r.values[1:] = new_states[:, 2, :][0]
+    # # plt.plot(new_states[1000:2000,2,:])
     # #
     # # plt.show()
+    
+    
 
     df_main['u_dot'] = (df_main.u - df_main.u.shift(1))/df_main.delta_time
     df_main['v_dot'] = (df_main.v - df_main.v.shift(1))/df_main.delta_time
     df_main['r_dot'] = (df_main.r - df_main.r.shift(1))/df_main.delta_time
 
-    df_main.u_dot = (df_main.delta_time.shift(3)*df_main.u_dot.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
-    df_main.v_dot = (df_main.delta_time.shift(3)*df_main.v_dot.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
-    df_main.r_dot = (df_main.delta_time.shift(3)*df_main.r_dot.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
+    df_main.u_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.u_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
+    df_main.v_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.v_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
+    df_main.r_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.r_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
 
-
+    # df_main = df_main[40:]
+    # states = df_main[['u_dot', 'v_dot', 'r_dot']][1:].to_numpy()
+    # states = states.reshape([states.shape[0], 3, 1])
+    # # add z score filtering
+    # A = np.identity(3)
+    # P = np.identity(3) * 0
+    # # measurement noise
+    # Q = np.diag([0.05, 0.05, 0.05])
+    # H = np.identity(3)
+    # R = np.diag([1.,0.5, 1.])
+    # B = 0
+    # u = 0
+    # x = inv(H).dot(states[0])
+    # P = inv(H).dot(R).dot(inv(H.T))
+    # new_states = np.zeros(shape=[1, 3, 1])
+    # for state in states:
+    #     x = A.dot(x)
+    #     P = A.dot(P).dot(A.T) + Q
+    #     S = H.dot(P).dot(H.T) + R
+    #     K = P.dot(H.T).dot(inv(S))
+    #     x = x + K.dot(state - H.dot(x))
+    #     P = P - K.dot(H).dot(P)
+    #     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
+    # new_states = new_states[1:]
+    # plt.plot(df_main.v_dot.tolist())
+    # df_main.u.values[1:] = new_states[:, 0, :][0];
+    # df_main.v.values[1:] = new_states[:, 1, :][0];
+    # # df_main.r.values[1:] = new_states[:, 2, :][0]
+    # plt.plot(new_states[:,1,:])
+    # #
+    # plt.show()
+    
+    
     df_main['x_real'] = df_main.x.cumsum()
     df_main['y_real'] = df_main.y.cumsum()
-    # plt.plot(df_main.index.tolist(), df_main.u.tolist())
+    # plt.plot(df_main.index.tolist(), df_main.r_dot.tolist())
     # plt.plot(df_main.index.tolist(), df_main.x.tolist())
     # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
     # plt.plot(df_main.y.tolist())
