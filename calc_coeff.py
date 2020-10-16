@@ -36,13 +36,13 @@ f_p_40 = df_main.f_p_40.to_numpy()[:,newaxis]
 # X = u uu uuu vv rr vr uvv rvu urr
 # Y = v uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 # N = r uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
-# X = np.concatenate([u_dot, u, u*u, u*v, u*r, u*np.radians(rsa),r*u, np.radians(rsa)*u, v*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
-X = np.concatenate([u_dot, u*u], axis=1)
+X = np.concatenate([u_dot, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
+# X = np.concatenate([u_dot, u*u], axis=1)
 Y = np.concatenate([v_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 N = np.concatenate([r_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
 F_r = -21.1* ship.A_r*u*u*rsa
-y_x = ship.Mass*(u_dot-r*v)-2*f_p_40 #- F_r*np.sin(np.radians(rsa))
+y_x = ship.Mass*(u_dot-r*v)-2*f_p_40 - F_r*np.sin(np.radians(rsa))
 y_y = ship.Mass*(v_dot+r*u)-F_r*np.cos(np.radians(rsa))
 y_r = ship.I_e*r_dot + F_r*ship.x_r*np.cos(np.radians(rsa))
 pair = (X,y_x)

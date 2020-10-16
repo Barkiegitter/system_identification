@@ -59,7 +59,7 @@ class Kernel:
     def main_loop(self):
         dt = time.time() - self.t_reg
         
-        if dt>0.05:
+        if dt>0.1:
             self.t_reg = time.time()
             self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = model.manoeuvre_model_rt_evolution(
                 self.u, self.v, self.r, self.heading,
@@ -68,7 +68,7 @@ class Kernel:
             self.x = self.x + delta_x_0
             self.y = self.y + delta_y_0
             self.heading = self.heading + delta_r_0
-            # print(self.x, self.y)
+            print(self.x, self.y)
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -119,6 +119,8 @@ if __name__ == '__main__':
     
    
     
+   
+#take u_dot out of equation of vorige u_dot, mse based on x and y    
    
     
    

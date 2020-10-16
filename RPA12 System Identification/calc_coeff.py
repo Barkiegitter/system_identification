@@ -65,17 +65,17 @@ print(train_score)
 
 x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
 
-import numpy as np
-import matplotlib.pyplot as plt
-fig, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-ax1.plot(df_main.lon, df_main.lat, 'g-')
-ax2.plot(df, u_dot, 'b-')
-ax1.set_xlabel('X data')
-ax1.set_ylabel('Y1 data', color='g')
-ax2.set_ylabel('Y2 data', color='b')
+# import numpy as np
+# import matplotlib.pyplot as plt
+# fig, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+# ax1.plot(df_main.lon, df_main.lat, 'g-')
+# ax2.plot(df, u_dot, 'b-')
+# ax1.set_xlabel('X data')
+# ax1.set_ylabel('Y1 data', color='g')
+# ax2.set_ylabel('Y2 data', color='b')
 
-plt.show()
+# plt.show()
 
 
 

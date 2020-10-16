@@ -15,6 +15,8 @@ df_main = pd.read_csv('test_1.csv', sep=',')
 # df_main = df_main[30400:31600].reset_index(inplace=False)
 df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 df_main = df_main.dropna()
+# df_main = df_main[:500]
+df_main['dt'] = pd.to_datetime(df_main['timestamp']).diff().dt.total_seconds()
 # df_main.rsa_0 = df_main.rsa_0+10.0
 def thrust_cone(x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down):
     #check axis!!!!!!! coherent to choosen axis system
@@ -57,6 +59,11 @@ df_main['u_a_2'] = (1-ship.w)*((-df_main.u-df_main.r*abs(ship.y_2))*np.cos(np.de
 df_main['u_a_1'] = (1-ship.w)*((-df_main.u+df_main.r*abs(ship.y_1))*np.cos(np.deg2rad(df_main.rsa_1)) + (-df_main.v-df_main.r*abs(ship.x_1))*np.sin(np.deg2rad(df_main.rsa_1))) #(1-ship.w)*
 df_main['u_a_0'] = (1-ship.w)*((df_main.u)*-1*np.cos(np.deg2rad(df_main.rsa_0)) + ((-df_main.v + df_main.r*abs(ship.x_0))*np.sin(np.deg2rad(df_main.rsa_0))) ) #(1-ship.w)*
 
+
+# df_main['u_a_2'] =  df_main.u
+# df_main['u_a_1'] =  df_main.u
+# df_main['u_a_0'] =  df_main.u
+
 df_main['beta_2'] = np.rad2deg(np.arctan((df_main.u_a_2)/(0.7*np.pi*df_main.rpm_2*ship.D_p)))
 #change invalse hoek acoording to engine stand
 # df_main['beta_2'] = df_main.apply(lambda row: row['beta_2'] + 180 if row['u_a_2']>=0  else (row['beta_2'] + 0 if row['u_a_2']<0 and row['rsa_2']<90 or row['rsa_2']>270. else (row['beta_2'] + 180 if row['u_a_2'] <0 and 90.<row['rsa_2']<270. else row['beta_2'])) ,axis=1)
@@ -68,7 +75,6 @@ df_main['beta_1'] = np.rad2deg(np.arctan((df_main.u_a_1)/(0.7*np.pi*df_main.rpm_
 # df_main['beta_1'] = df_main.beta_1.apply(lambda x: x-360 if x>360 else x)
 df_main['beta_1'] = df_main.beta_1.apply(lambda x: x+360 if x<0 else x)
 
-
 df_main['beta_0'] = np.rad2deg(np.arctan((df_main.u_a_0)/(0.7*np.pi*df_main.rpm_0*ship.D_p)))
 # df_main['beta_0'] = df_main.apply(lambda row: row['beta_0'] + 180 if row['u_a_0']>=0 and row['rsa_0']<90 or row['rsa_0']>270. else (row['beta_0'] + 180 if row['u_a_0']<0 and row['rsa_0']<90 or row['rsa_0']>270. else (row['beta_0'] + 360 if row['u_a_0'] <0 and 90.<row['rsa_0']<270. else row['beta_0'])) ,axis=1)
 # df_main['beta_0'] = df_main.beta_0.apply(lambda x: x-360 if x>360 else x)
@@ -77,60 +83,77 @@ df_main['beta_0'] = df_main.beta_0.apply(lambda x: x+360 if x<0 else x)
 # first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
 df_main['t_21_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']), axis=1)
 df_main['t_20_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_0, ship.y_0, row['rsa_0'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']), axis=1)
-df_main['f_p_40_2'] = (1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*((1-ship.t)*ship.beta_coef(df_main.beta_2)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_2)**2)+ (0.7*np.pi*df_main.rpm_2*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*
+df_main['f_p_40_2'] = 0.5*(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*((1-ship.t)*ship.beta_coef(df_main.beta_2)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_2)**2)+(0.7*np.pi*df_main.rpm_2*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*
 ##
 df_main['t_12_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_2, ship.y_2, row['rsa_2'], 25.0, 100.0, ship.x_1, ship.y_1, row['rsa_1']), axis=1)
 df_main['t_10_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_0, ship.y_0, row['rsa_0'], 25.0, 100.0, ship.x_1, ship.y_1, row['rsa_1']), axis=1)
-df_main['f_p_40_1'] = (1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])*((1-ship.t)*ship.beta_coef(df_main.beta_1)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_1)**2)+ (0.7*np.pi*df_main.rpm_1*ship.D_p)**2))*np.pi/4*ship.D_p**2) #(1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])*
-
+df_main['f_p_40_1'] = 0.5*(1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])*((1-ship.t)*ship.beta_coef(df_main.beta_1)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_1)**2)+(0.7*np.pi*df_main.rpm_1*ship.D_p)**2))*np.pi/4*ship.D_p**2) #(1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])*
+#
 df_main['t_02_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_2, ship.y_2, row['rsa_2'], 25.0, 100.0, ship.x_0, ship.y_0, row['rsa_0']), axis=1)
 df_main['t_01_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_0, ship.y_0, row['rsa_0']), axis=1)
-df_main['f_p_40_0'] = (1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+ (0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
+df_main['f_p_40_0'] = 0.5*(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+(0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
+# 
 
-# plt.plot(df_main.index.tolist()[:],df_main.u_a_1.tolist()[:])
-# plt.plot(df_main.index.tolist()[:],df_main.t_02_phi.tolist()[:])
-# plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
-# plt.plot(df_main.index.tolist()[:],df_main.u_a_1)
-# plt.plot(df_main.index.tolist()[:],df_main.beta_2)
-# plt.plot(df_main.index.tolist()[:],df_main.beta_1)
-# plt.plot(df_main.index.tolist()[:],- abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) + abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) + abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1))
+# J =(1-w)*u/(n_p*D_p);                                                               % Advance ratio of the propeller   J =(1-w)*u/(n_p*D_p)
+#     F_r = - 577 * A_r * (u*1.3)^2 * sin(deg2rad(delta));                                      % Rudder force with respect to speed and rudder angle
 
+#     F_p = (1-t)*rho * n_p^2 * D_p^4 * interp1(K_t(:,1),K_t(:,2),J,'linear','extrap');    % Propeller force with respect to speed and propeller rpm
+
+# df_main['t_21_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']), axis=1)
+
+
+#slide u_dot
+
+df_main['u_dot_spec'] = df_main.u_dot.shift(5)
+df_main['v_dot_spec'] = df_main.v_dot.shift(5)
+df_main['r_dot_spec'] = df_main.r_dot.shift(5)
+
+
+df_main = df_main[6:-7]
 plt.show()
 
-u = df_main.u.to_numpy()[:,newaxis]
-v = df_main.v.to_numpy()[:,newaxis]
-r = df_main.r.to_numpy()[:,newaxis]
+u = df_main.u.to_numpy()[:, newaxis]
+v = df_main.v.to_numpy()[:, newaxis]
+r = df_main.r.to_numpy()[:, newaxis]
 
-u_dot = df_main.u_dot.to_numpy()[:,newaxis]
-v_dot = df_main.v_dot.to_numpy()[:,newaxis]
-r_dot = df_main.r_dot.to_numpy()[:,newaxis]
+u_dot_spec = df_main.u_dot_spec.to_numpy()[:, newaxis]
+u_dot = df_main.u_dot.to_numpy()[:, newaxis]
+
+v_dot = df_main.v_dot.to_numpy()[:, newaxis]
+v_dot_spec = df_main.v_dot_spec.to_numpy()[:, newaxis]
+
+
+r_dot = df_main.r_dot.to_numpy()[:, newaxis]
+r_dot_spec = df_main.r_dot_spec.to_numpy()[:, newaxis]
+
 
 rsa_0 = df_main.rsa_0.to_numpy()[:, newaxis]
 rsa_1 = df_main.rsa_1.to_numpy()[:, newaxis]
 rsa_2 = df_main.rsa_2.to_numpy()[:, newaxis]
 
-f_p_40_0 = df_main.f_p_40_0.to_numpy()[:,newaxis]
-f_p_40_2 = df_main.f_p_40_2.to_numpy()[:,newaxis]
-f_p_40_1 = df_main.f_p_40_1.to_numpy()[:,newaxis]
+f_p_40_0 = df_main.f_p_40_0.to_numpy()[:, newaxis]
+f_p_40_2 = df_main.f_p_40_2.to_numpy()[:, newaxis]
+f_p_40_1 = df_main.f_p_40_1.to_numpy()[:, newaxis]
 
 # X = u uu uuu vv rr vr uvv rvu urr
 # Y = v uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 # N = r uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
-X = np.concatenate([u_dot, u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
-# X = np.concatenate([u_dot, u*u], axis=1)
+X = np.concatenate([u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
+# X = np.concatenate([u_dot_spec, u*u], axis=1)
 # X = np.concatenate([u_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
-Y = np.concatenate([v_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
-N = np.concatenate([r_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
+Y = np.concatenate([v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
-y_x = ship.Mass*(u_dot-r*v)+1*(np.cos(np.deg2rad(rsa_0))*abs(f_p_40_0)+np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1)+np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2))
-y_y = ship.Mass*(v_dot+r*u)-1*(np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0)+np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1)+np.sin(np.deg2rad(rsa_2))*abs(f_p_40_2)) #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
-y_r = ship.I_e*r_dot -1*(abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_0) - abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*abs(f_p_40_2) - abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*abs(f_p_40_1) - abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*abs(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*abs(f_p_40_1))
+N = np.concatenate([r, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
-pair = (X, y_x)
+y_x = ship.Mass*(u_dot-r*v)+1*(np.cos(np.deg2rad(rsa_0))*(f_p_40_0)+np.cos(np.deg2rad(rsa_1))*(f_p_40_1)+np.cos(np.deg2rad(rsa_2))*(f_p_40_2))
+y_y = ship.Mass*(v_dot+r*u)-1*(np.sin(np.deg2rad(rsa_0))*(f_p_40_0)+np.sin(np.deg2rad(rsa_1))*(f_p_40_1)+np.sin(np.deg2rad(rsa_2))*(f_p_40_2)) #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
+y_r = ship.I_e*r_dot - 1*(abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*(f_p_40_0) - abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*(f_p_40_2) - (ship.x_1)*np.sin(np.deg2rad(rsa_1))*(f_p_40_1) - abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*(f_p_40_1))
 
-lasso = RidgeCV()
-lasso.fit(pair[0], pair[1] )
-train_score=lasso.score(pair[0], pair[1])
+# pair = (X, y_x)
+
+# lasso = RidgeCV()
+# lasso.fit(pair[0], pair[1] )
+# train_score=lasso.score(pair[0], pair[1])
 
 
 array_export = pairs = [(X, y_x, 'X'), (Y, y_y, 'Y'), (N, y_r, 'N')]
@@ -140,22 +163,28 @@ lasso_Y = RidgeCV()
 lasso_Y.fit(Y, y_y)
 lasso_N = RidgeCV()
 lasso_N.fit(N, y_r)
+print(lasso_X.score(X, y_x))
+print(lasso_Y.score(Y, y_y))
 print(lasso_N.score(N, y_r))
-a = np.asarray([ np.concatenate([lasso_X.coef_[0],np.zeros(len(lasso_Y.coef_[0])-len(lasso_X.coef_[0]))]), lasso_Y.coef_[0], lasso_N.coef_[0] ])
+
+
+a = np.asarray([np.concatenate([lasso_X.coef_[0],np.zeros(len(lasso_Y.coef_[0])-len(lasso_X.coef_[0]))]), lasso_Y.coef_[0], lasso_N.coef_[0]])
 np.savetxt("foo.csv", a, delimiter=",")
 
 # import numpy as np
 # x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
-# import matplotlib.pyplot as plt
-# fig, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-# ax1.plot(df_main.lon, df_main.lat, 'g-')
-# ax2.plot(df_main.lon, u_dot, 'b-')
+import matplotlib.pyplot as plt
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax1.plot(df_main.f_p_40_0, 'b-')
+# ax1.plot(df_main.f_p_40_1, 'g-')
+# ax1.plot(df_main.u_a_2, 'r-')
+# ax2.plot(df_main.f_p_40_0)
 # ax1.set_xlabel('X data')
 # ax1.set_ylabel('Y1 data', color='g')
 # ax2.set_ylabel('Y2 data', color='b')
-#
-# plt.show()
+
+plt.show()
 
 # build model like mikhail
 # think of algorithm to improve MSE with iteration between engine param and hydrocoefficients (including randomizer)
@@ -168,3 +197,5 @@ np.savetxt("foo.csv", a, delimiter=",")
 # print(lasso_regressor.best_params_)
 # print(lasso_regressor.best_score_)
 #
+# plt.plot(df_main.f_p_4Q_0)
+# plt.show()

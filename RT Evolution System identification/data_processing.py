@@ -24,15 +24,16 @@ def haversine(lon1, lat1, lon2, lat2):
 ###%
 
 MA_ = 17
-MA_bound = int(MA_/2) -1
+MA_bound = int((MA_-1)/2)
 
 
-MA_acc = 25
-MA_bound_acc = int(MA_/2) -1
+MA_acc = 155
+MA_bound_acc = int((MA_-1)/2)
 
 
 manoeuvres = ['circle_left','astern','zigzag_20' , 'zigzag_10', 'circle_right']
 manoeuvres = ['all']
+# manoeuvres = ['circle_left']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
     # file_path = './Autopilot_light/RT_Evolution_manoeuvre_' + manoeuvre + '_2020-08-18.csv'
@@ -47,13 +48,14 @@ for manoeuvre in manoeuvres:
     df_main = df_main.apply(pd.to_numeric, errors='coerce')
     df_main.timestamp = df_main.timestamp*1000000000
     df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
+    
 
     time_begin = df_main.timestamp[1]
     df_main['timestamp_norm'] = df_main.timestamp.apply(lambda x: (x-time_begin).total_seconds())
     # df_main.hdg = df_main.hdg + 4.2
     df_main = df_main[10:]
-    df_main = df_main.iloc[::2]
-    # df_main = df_main[0:4000]
+    df_main = df_main.iloc[::4]
+    # df_main = df_main[100:4000]
     ##
     #calculate speeds, ROT, acc.
 
@@ -68,7 +70,6 @@ for manoeuvre in manoeuvres:
         df_main.loc[i, 'x'] = np.sign(df_main.loc[i, 'lon'] - df_main.loc[i - 1, 'lon']) * haversine(df_main.loc[i - 1, 'lon'], df_main.loc[i, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
         df_main.loc[i, 'y'] = np.sign(df_main.loc[i, 'lat'] - df_main.loc[i - 1, 'lat']) * haversine(df_main.loc[i, 'lon'], df_main.loc[i - 1, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
         if abs(df_main.loc[i,'hdg'] - df_main.loc[i-1,'hdg'])>360.0:
-            print('sadf')
             if df_main.loc[i,'hdg'] > df_main.loc[i-1,'hdg'] :
                 df_main.loc[i, 'delta_psi'] = df_main.loc[i,'hdg'] - 360 - df_main.loc[i-1,'hdg']
             elif df_main.loc[i,'hdg'] < df_main.loc[i-1,'hdg'] :
@@ -79,9 +80,14 @@ for manoeuvre in manoeuvres:
     # df_main.x = df_main.x[df_main.x.between(df_main.x.quantile(.01), df_main.x.quantile(.99))]
     # df_main.y = df_main.y[df_main.y.between(df_main.y.quantile(.01), df_main.y.quantile(.99))]
     # df_main.delta_psi = df_main.delta_psi[df_main.delta_psi.between(df_main.delta_psi.quantile(.01), df_main.delta_psi.quantile(.999999))]
-    df_main = df_main[abs(df_main.delta_psi)<20.0]
+    # df_main = df_main[abs(df_main.delta_psi)<20.0]
+    df_main.delta_psi = (df_main.delta_time.shift(MA_bound_acc)*df_main.delta_psi.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
+    df_main.x = (df_main.delta_time.shift(MA_bound_acc)*df_main.x.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
+    df_main.y = (df_main.delta_time.shift(MA_bound_acc)*df_main.y.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
 
-
+    # plt.plot(df_main.y.tolist())
+    # plt.show()
+    
 
     
     states = df_main[['x', 'y', 'delta_psi']].to_numpy()
@@ -109,9 +115,9 @@ for manoeuvre in manoeuvres:
     new_states = new_states[1:]
 
     # plt.plot(df_main.x.tolist())
-    df_main.x = new_states[:, 0, :];
-    df_main.y = new_states[:, 1, :];
-    df_main.delta_psi = new_states[:, 2, :]
+    # df_main.x = new_states[:, 0, :];
+    # df_main.y = new_states[:, 1, :];
+    # df_main.delta_psi = new_states[:, 2, :]
     # plt.plot(new_states[:,0,:])
     #
     # plt.show()
@@ -119,17 +125,24 @@ for manoeuvre in manoeuvres:
     df_main['x_dot'] = df_main.x / df_main.delta_time
     df_main['y_dot'] = df_main.y / df_main.delta_time
     df_main['delta_psi_dot'] = df_main.delta_psi / df_main.delta_time
+    
+    
+    df_main.x_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.x_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
+    df_main.y_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.y_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
+    df_main.delta_psi_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.delta_psi_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
 
     df_main['u'] = df_main.apply(lambda row: row.x_dot * np.sin(np.deg2rad(row.hdg)) + row.y_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
     df_main['v'] = df_main.apply(lambda row: -row.y_dot * np.sin(np.deg2rad(row.hdg)) + row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
     df_main['r'] = df_main.delta_psi_dot.apply(lambda x: np.deg2rad(x))
 
+    
 
 
-
-    df_main.u = (df_main.delta_time.shift(MA_bound)*df_main.u.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
-    df_main.v = (df_main.delta_time.shift(MA_bound)*df_main.v.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
-    df_main.r = (df_main.delta_time.shift(MA_bound)*df_main.r.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+    # df_main.u = (df_main.delta_time.shift(MA_bound)*df_main.u.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+    # df_main.v = (df_main.delta_time.shift(MA_bound)*df_main.v.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+    # df_main.r = (df_main.delta_time.shift(MA_bound)*df_main.r.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+    
+    
     
     # df_main = df_main[35:]
     # states = df_main[['u', 'v', 'r']][1:].to_numpy()
@@ -172,7 +185,9 @@ for manoeuvre in manoeuvres:
     df_main.u_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.u_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
     df_main.v_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.v_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
     df_main.r_dot = (df_main.delta_time.shift(MA_bound_acc)*df_main.r_dot.shift(MA_bound_acc)).rolling(window=MA_acc).sum()/df_main.delta_time.shift(MA_bound_acc).rolling(window=MA_acc).sum()
-
+    
+    # plt.plot(df_main.r_dot.tolist())
+    # plt.show()
     # df_main = df_main[40:]
     # states = df_main[['u_dot', 'v_dot', 'r_dot']][1:].to_numpy()
     # states = states.reshape([states.shape[0], 3, 1])
@@ -208,13 +223,15 @@ for manoeuvre in manoeuvres:
     
     df_main['x_real'] = df_main.x.cumsum()
     df_main['y_real'] = df_main.y.cumsum()
-    # plt.plot(df_main.index.tolist(), df_main.r_dot.tolist())
-    # plt.plot(df_main.index.tolist(), df_main.x.tolist())
+    df_main['psi'] = df_main.delta_psi.cumsum()
+    # plt.plot(np.sqrt(df_main.u**2+df_main.v**2).tolist()[:1000])
+    # plt.plot(np.sqrt(df_main.x_dot**2+df_main.y_dot**2).tolist()[:1000])
+    # plt.plot(df_main.u[4000:6000])
     # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
-    # plt.plot(df_main.y.tolist())
-    # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
+    # plt.plot(df_main.rpm_0.tolist())
+    plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
 
-    # plt.show()
+    plt.show()
     df_all = pd.concat([df_all, df_main], axis=0)
 df_all.to_csv('test_1.csv', index =False)
 
