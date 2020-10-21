@@ -37,7 +37,7 @@ manoeuvres = ['all']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
     # file_path = './Autopilot_light/RT_Evolution_manoeuvre_' + manoeuvre + '_2020-08-18.csv'
-    file_path = './Autopilot_light/' + 'all.csv'
+    file_path = './Autopilot_light/' + 'cruise_manoeuvres.csv'
     df_main = pd.read_csv(file_path, sep=',')
     df_main.columns = ['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
     df_main = df_main.drop_duplicates(subset=['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2'])[1:]

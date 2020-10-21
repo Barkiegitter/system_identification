@@ -422,10 +422,14 @@ class SimpleControls:
         if self.manoeuvre=='manoeuvre_astern':
             self.manoeuvre_astern(ships_mat, environment_variable)
 
-        self.write_csv(
-            [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
-             float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
-             float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
-            'all')
+
+
+        if time.time()-self.t_reg>0.25:
+            self.t_reg = time.time()
+            self.write_csv(
+                [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
+                 float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+                 float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
+                'cruise_manoeuvres_morechill')
 
         return (for_send, ships_mat)
