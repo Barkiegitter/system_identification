@@ -14,16 +14,15 @@ from manoeuvre_model_evo import ship_model
 ship = ship()
 ship_model = ship_model()
 
-
 df_main = pd.read_csv('test_1.csv', sep=',')
 # df_main = df_main[30400:31600].reset_index(inplace=False)
 df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 df_main = df_main.dropna()
 df_main['dt'] = pd.to_datetime(df_main['timestamp']).diff().dt.total_seconds()
 
-df_main = df_main[:600]
-
+df_main = df_main[2:100]
 u, v, r, hdg = df_main.loc[df_main.index[0], 'u'],df_main.loc[df_main.index[0], 'v'], df_main.loc[df_main.index[0], 'r'], df_main.loc[df_main.index[0], 'hdg']
+
 df_input = df_main[['rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']]
 # print(u, v, r, hdg)
 df_sim = pd.DataFrame([])
@@ -33,7 +32,7 @@ for i in df_main[:-1].index:
                                                                                                    df_main.loc[i, 'rsa_0'], df_main.loc[i, 'rsa_1'], df_main.loc[i, 'rsa_2'],
                                                                                                    df_main.loc[i, 'delta_time']
                                                                                                    )
-    print(u, v, r, hdg)
+    # print(u, v, r, hdg)
     df_temp = pd.DataFrame({
                         'index_sim' : [i+1],
                         'x_delta_sim': [delta_x_0],
@@ -60,9 +59,5 @@ plt.show()
 # load initial states (lengte brackets bepalen van simuleren om error te bepalen. )
 # recognize manoeuvre segments from trajectory
 
-
-
-# df.merge(df.textcol.apply(lambda s: pd.Series({'feature1':s+1, 'feature2':s-1})), 
-#     left_index=True, right_index=True)   uvr xy
 
 # use separate manoeuvres to compare performance 

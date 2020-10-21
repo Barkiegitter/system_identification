@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 from numpy import newaxis
 from sklearn.linear_model import Lasso
-from sklearn.linear_model import RidgeCV
-# from sklearn.linear_model import LassoCV
+from sklearn.linear_model import Ridge
 import matplotlib.pyplot as plt
 import math
 
@@ -15,7 +14,7 @@ df_main = pd.read_csv('test_1.csv', sep=',')
 # df_main = df_main[30400:31600].reset_index(inplace=False)
 df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 df_main = df_main.dropna()
-# df_main = df_main[:500]
+df_main = df_main[100:]
 df_main['dt'] = pd.to_datetime(df_main['timestamp']).diff().dt.total_seconds()
 # df_main.rsa_0 = df_main.rsa_0+10.0
 def thrust_cone(x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down):
@@ -53,6 +52,18 @@ def thruster_interaction_coefficient(x_eng, y_eng, az_eng, cone_deg, flow_distan
 df_main.rpm_0 = df_main.rpm_0/60.0
 df_main.rpm_1 = df_main.rpm_1/60.0
 df_main.rpm_2 = df_main.rpm_2/60.0
+
+
+
+df_main['az_speed_0'] = df_main.rsa_0.diff()
+df_main['az_speed_1'] = df_main.rsa_1.diff()
+df_main['az_speed_2'] = df_main.rsa_2.diff()
+
+# df_main.az_speed_0 = df_main.az_speed_0.apply(lambda x: x-360. if x>360. else ())
+
+
+
+
 
 #azimuth 2 port side
 df_main['u_a_2'] = (1-ship.w)*((-df_main.u-df_main.r*abs(ship.y_2))*np.cos(np.deg2rad(df_main.rsa_2)) + (-df_main.v-df_main.r*abs(ship.x_2))*np.sin(np.deg2rad(df_main.rsa_2))) #(1-ship.w)*
@@ -106,10 +117,10 @@ df_main['f_p_40_0'] = 0.5*(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*((1-sh
 
 df_main['u_dot_spec'] = df_main.u_dot.shift(5)
 df_main['v_dot_spec'] = df_main.v_dot.shift(5)
-df_main['r_dot_spec'] = df_main.r_dot.shift(5)
+df_main['r_dot_spec'] = df_main.r_dot.shift(50)
 
 
-df_main = df_main[6:-7]
+df_main = df_main[52:-7]
 plt.show()
 
 u = df_main.u.to_numpy()[:, newaxis]
@@ -131,6 +142,11 @@ rsa_0 = df_main.rsa_0.to_numpy()[:, newaxis]
 rsa_1 = df_main.rsa_1.to_numpy()[:, newaxis]
 rsa_2 = df_main.rsa_2.to_numpy()[:, newaxis]
 
+
+az_speed_0 = df_main.az_speed_0.to_numpy()[:, newaxis]
+az_speed_1 = df_main.az_speed_1.to_numpy()[:, newaxis]
+az_speed_2 = df_main.az_speed_2.to_numpy()[:, newaxis]
+
 f_p_40_0 = df_main.f_p_40_0.to_numpy()[:, newaxis]
 f_p_40_2 = df_main.f_p_40_2.to_numpy()[:, newaxis]
 f_p_40_1 = df_main.f_p_40_1.to_numpy()[:, newaxis]
@@ -139,50 +155,102 @@ f_p_40_1 = df_main.f_p_40_1.to_numpy()[:, newaxis]
 # Y = v uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 # N = r uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 X = np.concatenate([u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
-# X = np.concatenate([u_dot_spec, u*u], axis=1)
+# X = np.concatenate([u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r, az_speed_0*abs(u)*np.sin(np.rad2deg(rsa_0)),az_speed_2*abs(u)*np.sin(np.rad2deg(rsa_2)),az_speed_1*abs(u)*np.sin(np.rad2deg(rsa_1))], axis=1)
 # X = np.concatenate([u_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
+# Y = np.concatenate([v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 Y = np.concatenate([v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
-N = np.concatenate([r, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
+N = np.concatenate([r_dot, v*r, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
 y_x = ship.Mass*(u_dot-r*v)+1*(np.cos(np.deg2rad(rsa_0))*(f_p_40_0)+np.cos(np.deg2rad(rsa_1))*(f_p_40_1)+np.cos(np.deg2rad(rsa_2))*(f_p_40_2))
 y_y = ship.Mass*(v_dot+r*u)-1*(np.sin(np.deg2rad(rsa_0))*(f_p_40_0)+np.sin(np.deg2rad(rsa_1))*(f_p_40_1)+np.sin(np.deg2rad(rsa_2))*(f_p_40_2)) #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
 y_r = ship.I_e*r_dot - 1*(abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*(f_p_40_0) - abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*(f_p_40_2) - (ship.x_1)*np.sin(np.deg2rad(rsa_1))*(f_p_40_1) - abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*(f_p_40_1))
 
-# pair = (X, y_x)
 
-# lasso = RidgeCV()
-# lasso.fit(pair[0], pair[1] )
-# train_score=lasso.score(pair[0], pair[1])
-
-
-array_export = pairs = [(X, y_x, 'X'), (Y, y_y, 'Y'), (N, y_r, 'N')]
-lasso_X = RidgeCV()
-lasso_X.fit(X, y_x)
-lasso_Y = RidgeCV()
-lasso_Y.fit(Y, y_y)
-lasso_N = RidgeCV()
-lasso_N.fit(N, y_r)
-print(lasso_X.score(X, y_x))
-print(lasso_Y.score(Y, y_y))
-print(lasso_N.score(N, y_r))
+# array_export = pairs = [(X, y_x, 'X'), (Y, y_y, 'Y'), (N, y_r, 'N')]
+lasso_X = Lasso()
+# parameters={'alpha':[1e-15,1e-10,1e-8,1e-3,1e-2,1,5,20,35,40,45,50,15000]}
+# parameters={'alpha':np.linspace(0.001,11,1001).tolist()}
+# ridge_regressor_X=GridSearchCV(lasso_X,parameters, cv=5)
+# ridge_regressor_X.fit(X,y_x)
 
 
-a = np.asarray([np.concatenate([lasso_X.coef_[0],np.zeros(len(lasso_Y.coef_[0])-len(lasso_X.coef_[0]))]), lasso_Y.coef_[0], lasso_N.coef_[0]])
+
+best_alpha = 0.
+best_score = 0.
+# for alpha in [0.0]:# np.logspace(-9,4,101):
+#     clf=Lasso(alpha=alpha, fit_intercept=False, tol=0.01,
+#               max_iter=100000000)
+#     clf.fit(X,y_x)
+#     print(alpha)
+#     if clf.score(X,y_x)>best_score:
+#         best_score = clf.score(X,y_x)
+#         best_alpha = alpha
+
+clf_X=Lasso(alpha=1e-6, fit_intercept=False, tol=.01)
+              # max_iter=1000000000)
+clf_X.fit(X,y_x)
+
+clf_Y=Lasso(alpha=1e-6, fit_intercept=False, tol=.01)
+              # max_iter=1000000000)
+clf_Y.fit(Y,y_y)
+
+clf_N=Lasso(alpha=1e-6, fit_intercept=False, tol=.01)
+              # max_iter=1000000000)
+clf_N.fit(N,y_r)
+
+# lasso_Y = Lasso()
+# parameters={'alpha':[1e-15,1e-10,1e-8,1e-3,1e-2,1,5,10,20,30,35,40,45,50,55,100]}
+# ridge_regressor_Y=GridSearchCV(lasso_Y,parameters,scoring='neg_mean_squared_error', cv=7)
+# ridge_regressor_Y.fit(Y,y_y)
+
+
+# lasso_N = Lasso()
+# parameters={'alpha':[1e-15,1e-10,1e-8,1e-3,1e-2,1,5,10,20,30,35,40,45,50,55,100]}
+# ridge_regressor_N=GridSearchCV(lasso_N,parameters,scoring='neg_mean_squared_error', cv=7)
+# ridge_regressor_N.fit(N,y_r)
+
+
+# print(ridge_regressor_Y.best_estimator_.score(Y, y_y))
+# print(ridge_regressor_X.best_estimator_.score(X, y_x))
+print(clf_X.score(X, y_x), best_alpha)
+print(clf_Y.score(Y,y_y), best_alpha)
+
+print(clf_N.score(N,y_r), best_alpha)
+
+# print(ridge_regressor_N.best_estimator_.score(N, y_r))
+
+
+
+
+
+a = np.asarray([np.concatenate([clf_X.coef_,np.zeros(len(clf_Y.coef_)-len(clf_X.coef_))]), clf_Y.coef_, clf_N.coef_])
 np.savetxt("foo.csv", a, delimiter=",")
 
 # import numpy as np
 # x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
-import matplotlib.pyplot as plt
-fig, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-ax1.plot(df_main.f_p_40_0, 'b-')
+# import matplotlib.pyplot as plt
+# fig, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+# ax1.plot(df_main.f_p_40_0, 'b-')
 # ax1.plot(df_main.f_p_40_1, 'g-')
 # ax1.plot(df_main.u_a_2, 'r-')
 # ax2.plot(df_main.f_p_40_0)
 # ax1.set_xlabel('X data')
 # ax1.set_ylabel('Y1 data', color='g')
 # ax2.set_ylabel('Y2 data', color='b')
+
+# plt.show()
+
+# plt.plot(np.sum(X*lasso_X.coef_, axis=1))
+# plt.plot(np.sum(N*ridge_regressor_N.best_estimator_.coef_, axis=1));plt.plot(y_r)
+# plt.plot(np.sum(X*ridge_regressor_X.best_estimator_.coef_, axis=1));plt.plot(y_x)
+# plt.plot(np.sum(X*clf_X.coef_, axis=1));plt.plot(y_x)
+# plt.plot(np.sum(Y*clf_Y.coef_, axis=1));plt.plot(y_y)
+plt.plot(np.sum(N*clf_N.coef_, axis=1));plt.plot(y_r)
+
+# plt.plot(np.sum(Y*ridge_regressor_Y.best_estimator_.coef_, axis=1));plt.plot(y_y)
+
 
 plt.show()
 
