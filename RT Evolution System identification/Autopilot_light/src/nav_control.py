@@ -430,6 +430,6 @@ class SimpleControls:
                 [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
                  float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
                  float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
-                'cruise_manoeuvres_morechill')
+                'precision_manoeuvres')
 
         return (for_send, ships_mat)
