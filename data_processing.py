@@ -80,7 +80,7 @@ for state in states:
     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
 new_states = new_states[1:]
 
-df_main.x = new_states[:,0,:] ;df_main.y = new_states[:,1,:] ;df_main.delta_psi = new_states[:,2,:]
+# df_main.x = new_states[:,0,:] ;df_main.y = new_states[:,1,:] ;df_main.delta_psi = new_states[:,2,:]
 
 
 
@@ -97,6 +97,26 @@ df_main.u = (df_main.delta_time.shift(3)*df_main.u.shift(3)).rolling(window=7).s
 df_main.v = (df_main.delta_time.shift(3)*df_main.v.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
 df_main.r = (df_main.delta_time.shift(3)*df_main.r.shift(3)).rolling(window=7).sum()/df_main.delta_time.shift(3).rolling(window=7).sum()
 
+MA_ = 17
+MA_bound = int((MA_-1)/2)
+
+MA__r = 17
+MA_bound_r = int((MA__r-1)/2)
+
+MA_acc = 35
+MA_bound_acc = int((MA_acc-1)/2)
+
+MA_acc_r = 35
+MA_bound_acc_r = int((MA_acc_r-1)/2)
+
+df_main.u = (df_main.delta_time.shift(MA_bound)*df_main.u.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+df_main.v = (df_main.delta_time.shift(MA_bound)*df_main.v.shift(MA_bound)).rolling(window=MA_).sum()/df_main.delta_time.shift(MA_bound).rolling(window=MA_).sum()
+df_main.r = (df_main.delta_time.shift(MA_bound_r)*df_main.r.shift(MA_bound_r)).rolling(window=MA__r).sum()/df_main.delta_time.shift(MA_bound_r).rolling(window=MA__r).sum()
+
+df_main.u = df_main.u.shift(-MA_acc)
+df_main.v = df_main.v.shift(-MA_acc)
+df_main.r = df_main.r.shift(-MA_acc_r)
+
 df_main['u_dot'] = (df_main.u - df_main.u.shift(1))/df_main.delta_time
 df_main['v_dot'] = (df_main.v - df_main.v.shift(1))/df_main.delta_time
 df_main['r_dot'] = (df_main.r - df_main.r.shift(1))/df_main.delta_time
@@ -109,11 +129,11 @@ df_main.r_dot = (df_main.delta_time.shift(3)*df_main.r_dot.shift(3)).rolling(win
 df_main['x_real'] = df_main.x.cumsum()
 df_main['y_real'] = df_main.y.cumsum()
 # plt.plot(df_main.x_real.tolist(), df_main.y_real.tolist())
-plt.plot(df_main.index.tolist(), df_main.u.tolist())
+# plt.plot(df_main.index.tolist(), df_main.u.tolist())
 # plt.plot(df_main.y.tolist())
-# plt.plot(df_main.time.tolist()[:],df_main.y.tolist()[:])
+plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
 plt.show()
-df_main.to_csv('test_1.csv', index =False)
+# df_main.to_csv('test_1.csv', index =False)
 
 
 

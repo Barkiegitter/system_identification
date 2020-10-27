@@ -114,7 +114,7 @@ df_rsa = main.df_rsa
 df_rpm = main.df_rpm
 df_hdg = main.df_hdg
 
-
+#%%
 # plt.plot(df_rpm.rpm.tolist())
 
 # df_hdg.hdg = df_hdg.hdg.apply(lambda x: convert_float(x))
@@ -147,7 +147,6 @@ integer_loop = 1
 for i in df_main.index: #[df_main[df_main.time>df_rpm.time[0]].index[0]-1:]
     for k in df_rpm[integer_loop:].index:
         if df_rpm.loc[k, 'time']>df_main.loc[i, 'time']:
-            # print(k)
             rpm_inp = df_rpm.loc[k, 'rpm'] - \
                       ((df_rpm.loc[k, 'rpm'] - df_rpm.loc[k-1, 'rpm'])/((df_rpm.loc[k, 'time'] - df_rpm.loc[k-1, 'time']).total_seconds())) * \
                       ((df_rpm.loc[k, 'time']-df_main.loc[i, 'time']).total_seconds())
@@ -184,11 +183,11 @@ for i in df_main[1:].index:
             continue
 end = time.time()
 print(end-start)
-plt.plot(df_main.rsa.tolist()[:])#, df_main.rsa.tolist()[:])
+plt.plot(df_main.rpm.tolist()[:])#, df_main.rsa.tolist()[:])
 # plt.plot(df_rsa.time.tolist()[:],df_rsa.rsa.tolist()[:])
 plt.show()
 df_main.reset_index(inplace=True)
-df_main.to_csv('test.csv', index =False)
+# df_main.to_csv('test.csv', index =False)
 
 
 

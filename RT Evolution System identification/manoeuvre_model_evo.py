@@ -10,12 +10,12 @@ ship = ship()
 
 
 
-class ship_model():
-    def __init__(self):
-        self.u_dot = 0.0
+class ship_model:
+    def __init__(self, u_dot, v_dot, r_dot):
+        self.u_dot = u_dot
         self.u_dot_1 = 0.0
-        self.v_dot = 0.0
-        self.r_dot = 0.0
+        self.v_dot = v_dot
+        self.r_dot = r_dot
         self.r_dot_array = np.zeros(10)
 
         
@@ -86,22 +86,27 @@ class ship_model():
         # first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
         t_21_phi = self.thruster_interaction_coefficient(ship.x_1, ship.y_1, rsa_1, 25.0, 100.0, ship.x_2, ship.y_2, rsa_2)
         t_20_phi = self.thruster_interaction_coefficient(ship.x_0, ship.y_0, rsa_0, 25.0, 100.0, ship.x_2, ship.y_2, rsa_2)
-        f_p_4Q_2 = 1.0*(1 - t_21_phi) * (1 - t_20_phi) * ((1 - ship.t) * ship.beta_coef(beta_2) * 0.5 * ship.rho * ((((1-ship.w)*u_a_2)**2) + (0.7 * np.pi * rpm_2 * ship.D_p) ** 2)) * np.pi / 4 * (ship.D_p ** 2)
+        f_p_4Q_2 = 0.6*((1 - ship.t) * ship.beta_coef(beta_2) * 0.5 * ship.rho * ((((1-ship.w)*u_a_2)**2) + (0.7 * np.pi * rpm_2 * ship.D_p) ** 2)) * np.pi / 4 * (ship.D_p ** 2)
     
-    
+    # (1 - t_21_phi) * (1 - t_20_phi) * 
        # df_main['f_p_40_2'] = 0.5*(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*((1-ship.t)*ship.beta_coef(df_main.beta_2)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_2)**2)+(0.7*np.pi*df_main.rpm_2*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*
  
     
         t_12_phi = self.thruster_interaction_coefficient(ship.x_2, ship.y_2, rsa_2, 25.0, 100.0, ship.x_1, ship.y_1, rsa_1)
         t_10_phi = self.thruster_interaction_coefficient(ship.x_0, ship.y_0, rsa_0, 25.0, 100.0, ship.x_1, ship.y_1, rsa_1)
-        f_p_4Q_1 = 1.0*(1 - t_12_phi) * (1 - t_10_phi) * ((1 - ship.t) * ship.beta_coef(beta_1) * 0.5 * ship.rho * ((((1-ship.w)*u_a_1)**2) + (0.7 * np.pi * rpm_1 * ship.D_p) ** 2)) * np.pi / 4 * (ship.D_p ** 2)
-    
+        f_p_4Q_1 = 0.6* ((1 - ship.t) * ship.beta_coef(beta_1) * 0.5 * ship.rho * ((((1-ship.w)*u_a_1)**2) + (0.7 * np.pi * rpm_1 * ship.D_p) ** 2)) * np.pi / 4 * (ship.D_p ** 2)
+    # *(1 - t_12_phi) * (1 - t_10_phi) 
         t_02_phi = self.thruster_interaction_coefficient(ship.x_2, ship.y_2, rsa_2, 25.0, 100.0, ship.x_0, ship.y_0, rsa_0)
         t_01_phi = self.thruster_interaction_coefficient(ship.x_1, ship.y_1, rsa_1, 25.0, 100.0, ship.x_0, ship.y_0, rsa_0)
-        f_p_4Q_0 = 1.0*(1 - t_02_phi) * (1 - t_01_phi) * ((1 - ship.t) * ship.beta_coef(beta_0) * 0.5 * ship.rho * ((((1-ship.w)*u_a_0)**2) + (0.7 * np.pi * rpm_0 * ship.D_p) ** 2)) * np.pi / 4 * (ship.D_p ** 2)
+        f_p_4Q_0 = 0.6 * ((1 - ship.t) * ship.beta_coef(beta_0) * 0.5 * ship.rho * ((((1-ship.w)*u_a_0)**2) + (0.7 * np.pi * rpm_0 * ship.D_p) ** 2)) * np.pi / 4 * (ship.D_p ** 2)
+       
+        
+       # df_main['f_p_40_0'] = 0.6*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+(0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
+
+        # *(1 - t_02_phi) * (1 - t_01_phi)
         # print(f_p_4Q_0)
                       # ((1 - ship.w) * u_a_0) ** 2 +          
-        # print(f_p_4Q_0)
+        print(beta_0, f_p_4Q_0, u_a_0, rsa_0)
         # if rpm_0<0.1: 
         # f_p_4Q_0, f_p_4Q_1, f_p_4Q_2 = 0, 0, 0
 
@@ -141,7 +146,7 @@ class ship_model():
         #                       coef_[0][11] * abs_v * r +
         #                       coef_[0][12] * abs_r * r
         #                       )
-        surge_partial_force = ( #coef_[0][0] * self.u_dot +
+        surge_partial_force = (#coef_[0][0] * self.u_dot +
                                coef_[0][0] * u +
                                coef_[0][1] * u * u +
                                coef_[0][2] * u*u*u +
@@ -155,66 +160,90 @@ class ship_model():
                                # coef_[1][10]* np.cos(np.rad2deg(rsa_0)) + 
                                # coef_[1][11] * np.cos(np.rad2deg(rsa_0))
                                )
-        # X = np.concatenate([u_dot, u, u * u, u * u * u, v * v, r * r, v * r, u * v * v, r * v * u, u * r * r], axis=1)
-    # X = np.concatenate([u_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
+        # X = np.concatenate([u_dot_spec, u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
 
     
-        self.u_dot = (-surge_partial_force + r * v * ship.Mass - 1*(np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)+np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)+np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2)))/ (ship.Mass)
+        self.u_dot = (surge_partial_force + r * v * ship.Mass - 1*(np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)+np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)+np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2)))/ (ship.Mass)
     
     
         # print(f'u {u}, v {v}, r {r} , surge_1_5 {surge_partial_force} )
     
-        sway_partial_force = (coef_[1][0] * v +
-                              coef_[1][1] * u * v +
-                              coef_[1][2] * u * r +
-                              coef_[1][3] * (u2) * r +
-                              coef_[1][4] * (u2) * v +
-                              coef_[1][5] * (v3) +
-                              coef_[1][6] * r3 +
-                              coef_[1][7] * (r2) * v +
-                              coef_[1][8] * (v2) * r +
-                              coef_[1][9] * abs_v * v +
-                              coef_[1][10] * abs_r * v +
-                              coef_[1][11] * abs_v * r +
-                              coef_[1][12] * abs_r * r 
+        sway_partial_force = (#coef_[1][0] * self.v_dot +
+                              coef_[1][0] * v +
+                              coef_[1][1] * v * v +
+                              coef_[1][2] * u * v +
+                              coef_[1][3] * u * r +
+                              coef_[1][4] * (u2) * r +
+                              coef_[1][5] * (u2) * v +
+                              coef_[1][6] * (v3) +
+                              coef_[1][7] * r3 +
+                              coef_[1][8] * (r2) * v +
+                              coef_[1][9] * (v2) * r +
+                              coef_[1][10] * abs_v * v +
+                              coef_[1][11] * abs_r * v +
+                              coef_[1][12] * abs_v * r +
+                              coef_[1][13] * abs_r * r 
                               # coef_[1][13] * np.sin(np.rad2deg(rsa_0)) + 
                               # coef_[1][14]* np.sin(np.rad2deg(rsa_0)) + 
                               # coef_[1][15] * np.sin(np.rad2deg(rsa_0))
                                        
                               )
-        self.v_dot = (-sway_partial_force - ship.Mass * r * u + 1 * (np.sin(np.deg2rad(rsa_0))*(f_p_4Q_0)+np.sin(np.deg2rad(rsa_1))*(f_p_4Q_1)+np.sin(np.deg2rad(rsa_2))*(f_p_4Q_2)))/(ship.Mass)
+        # Y = np.concatenate([v_dot_spec,v,v*v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
+
+
+        self.v_dot = (sway_partial_force - ship.Mass * r * u - 1 * (np.sin(np.deg2rad(rsa_0))*(f_p_4Q_0)+np.sin(np.deg2rad(rsa_1))*(f_p_4Q_1)+np.sin(np.deg2rad(rsa_2))*(f_p_4Q_2)))/(ship.Mass)
     
-        force_partial = (coef_[2][0] * self.r_dot +
-                         coef_[2][1] * u * v +
-                         coef_[2][2] * u * r +
-                         coef_[2][3] * (u2) * r +
-                         coef_[2][4] * (u2) * v +
-                         coef_[2][5] * (v3) +
-                         coef_[2][6] * r3 +
-                         coef_[2][7] * (r2) * v +
-                         coef_[2][8] * (v2) * r +
-                         coef_[2][9] * abs_v * v +
-                         coef_[2][10] * abs_r * v +
-                         coef_[2][11] * abs_v * r +
-                         coef_[2][12] * abs_r * r )
+        force_partial = (#coef_[2][0] * self.r_dot +
+                         coef_[2][0] * r +
+                         coef_[2][1] * r * r +
+                         coef_[2][2] * v * r +
+                         coef_[2][3] * u * r +
+                         coef_[2][4] * (u2) * r +
+                         coef_[2][5] * (u2) * v +
+                         coef_[2][6] * (v3) +
+                         coef_[2][7] * r3 +
+                         coef_[2][8] * (r2) * v +
+                         coef_[2][9] * (v2) * r +
+                         coef_[2][10] * abs_v * v +
+                         coef_[2][11] * abs_r * v +
+                         coef_[2][12] * abs_v * r +
+                         coef_[2][13] * abs_r * r )
     
-    
-        self.r_dot_temp = (-force_partial + 1 * (abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*(f_p_4Q_0) - abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*(f_p_4Q_2) - abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*(f_p_4Q_1) - abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)))/ (ship.I_z )
-        self.r_dot = self.acc_avenger(self.r_dot_temp)
+    # N = np.concatenate([r_dot_spec,r,r*r, v*r, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
+
+        self.r_dot = (force_partial + 1 * (abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*(f_p_4Q_0) - abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*(f_p_4Q_2) - abs(ship.x_1)*np.sin(np.deg2rad(rsa_1))*(f_p_4Q_1) - abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)))/ (ship.I_e )
+        # self.r_dot = self.acc_avenger(self.r_dot_temp)
         # Calculating distance covered during this time iterval (using velocity from last interval)
         
-    
+        
+        # if self.u_dot>0.35:
+        #     self.u_dot=0.35
+        
+        # if self.u_dot<-0.0653:
+        #     self.u_dot=-0.0653
+            
+        
+        # if abs(self.v_dot)>0.153:
+        #     self.v_dot=0.153*np.sign(self.v_dot)
+        # if abs(self.r_dot)>0.05:
+        #     self.r_dot=0.05*np.sign(self.r_dot)
         # Calculating new velocities
         next_u = u + self.u_dot * dt
         next_v = v + self.v_dot * dt
         next_r = r + self.r_dot * dt
         
-        delta_x_0 = (next_u * np.sin(np.deg2rad(heading)) + next_v * np.cos(np.deg2rad(heading))) * dt
+        print(u, self.u_dot, self.v_dot, self.r_dot, heading)
+        
+        delta_x_0 = (u * np.sin(np.deg2rad(heading)) + v * np.cos(np.deg2rad(heading))) * dt
     
-        delta_y_0 = (-next_u * np.cos(np.deg2rad(heading)) + next_v * np.sin(np.deg2rad(heading))) * dt
+        delta_y_0 = (u * np.cos(np.deg2rad(heading)) - v * np.sin(np.deg2rad(heading))) * dt
         delta_r_0 = r * dt  # radians turned in the existing time step
         
         next_heading = heading + np.rad2deg(delta_r_0)
+        if next_heading>360.:
+            next_heading = next_heading-360.
+        if next_heading<-0.0:
+            next_heading = next_heading+360
         # self.u_dot_1 = self.u_dot
         # print(next_u, self.u_dot, delta_y_0, surge_partial_force,  f_p_4Q_0)
         # v_accel = (sway_partial_force - ship.Mass * r * u - 1 * (
