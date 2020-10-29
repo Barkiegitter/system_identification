@@ -104,6 +104,7 @@ class Kernel:
             # self.t_reg = time.time()
         self.screen.fill(self.bg_color)
         self.update_tugboat_img(self.spawn_location[0], self.spawn_location[1])
+        orientation and line
         pygame.display.update()
 
     
