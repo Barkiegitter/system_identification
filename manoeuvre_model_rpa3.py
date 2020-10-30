@@ -19,16 +19,30 @@ class ship_model:
         self.ship = ship
         self.coef_ = coef_
     def manoeuvre_model_rpa_3(self, u, v, r, heading,rpm,rsa, dt):
-
+        if rpm==0:
+            rpm=0.1
         beta= np.rad2deg(np.arctan((u)/(0.7*np.pi*rpm*self.ship.D_p)))
+        # print(beta)
         if beta>360.0:
             beta=beta-360
         elif beta<0.0:
             beta = beta + 360
         
+        
+        
+        
+        
+        
         f_p_4Q = (1-self.ship.t)*self.ship.beta_coef(beta)*0.5*self.ship.rho*(((((1-self.ship.w)*u)**2)+ (0.7*np.pi*rpm*self.ship.D_p)**2))*np.pi/4*self.ship.D_p**2
         
+        if rpm<0.0:
+            f_p_4Q = -1 * f_p_4Q
+        
+        
+        if rpm==0.1:
+            f_p_4Q=0
         F_r = -21.1* self.ship.A_r*u*u*rsa
+        # print(f_p_4Q)
 
         
         u2 = u ** 2
