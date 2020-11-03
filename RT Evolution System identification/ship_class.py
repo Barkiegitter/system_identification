@@ -55,6 +55,7 @@ class ship:
         self.D_p = 2.36
         self.t = 0.075
         self.pr = 0.69
+        # ship.w
         
         
 

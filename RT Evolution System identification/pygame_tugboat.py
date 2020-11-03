@@ -8,11 +8,23 @@ Created on Thu Sep 10 13:39:01 2020
 import pygame
 import manoeuvre_model_evo
 import time
+import pandas as pd
+import numpy as np
 from manoeuvre_model_evo import ship_model
-model = ship_model()
+from ship_class import ship
+# ship = ship()
+
+df_main = pd.read_csv('test_1.csv', sep=',')
+coef_ = np.genfromtxt('foo_evo.csv', delimiter=',')
+
+df_main = df_main[20:-500]
+u, v, r, hdg = df_main.loc[df_main.index[0], 'u'],df_main.loc[df_main.index[0], 'v'], df_main.loc[df_main.index[0], 'r'], df_main.loc[df_main.index[0], 'hdg']
+# ship_model = ship_model(df_main.loc[df_main.index[0], 'u_dot'],df_main.loc[df_main.index[0], 'v_dot'], df_main.loc[df_main.index[0], 'r_dot'], ship, coef_)
+
+df_input = df_main[['rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']]
 
 class Kernel:
-    def __init__(self, settings):
+    def __init__(self, settings, ship, ship_model, coef_):
         pygame.init()
         self.screen_size = (1000, 1000) #width height
         self.screen = pygame.display.set_mode(self.screen_size)
@@ -20,7 +32,7 @@ class Kernel:
         pygame.display.set_caption('tugboat control')
         
         self.scale_image = (114,260)
-        self.pixel_meter_ratio = 0.3
+        self.pixel_meter_ratio = 3.0
 
         self.spawn_location = (500,500)
 
@@ -35,17 +47,21 @@ class Kernel:
         self.x = 0.0
         self.y = 0.0
         self.heading = 10.0
-        self.u = 5.0
+        self.u = 0.0
         self.v = 0.0
         self.r = 0.0
         self.u_dot = 0.0
         self.v_dot = 0.0
         self.r_dot = 0.0
+        self.coef_ = coef_
+        self.ship = ship()
+        self.ship_model = ship_model(0,0,0,self.ship,self.coef_)
 
 
 
     def update_tugboat_img(self, x, y):
-        self.screen.blit(self.tugboat_img, (x-(int(self.scale_image[0]/2)),y-(int(self.scale_image[1]/2))))
+        tug_boat_img = pygame.transform.rotate(self.tugboat_img, -self.heading)
+        self.screen.blit(tug_boat_img, (x-(int(self.scale_image[0]/2)),y-(int(self.scale_image[1]/2))))
     
     def button(self):
         mouse = pygame.mouse.get_pos()
@@ -59,16 +75,18 @@ class Kernel:
     def main_loop(self):
         dt = time.time() - self.t_reg
         
-        if dt>0.1:
+        if dt>0.3:
             self.t_reg = time.time()
-            self.u, self.v, self.r, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = model.manoeuvre_model_rt_evolution(
+            self.u, self.v, self.r, self.heading, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot = self.ship_model.manoeuvre_model_rt_evolution(
                 self.u, self.v, self.r, self.heading,
                 self.rpm_const, self.rpm_const, self.rpm_const,
-                180., 180., 180., dt)
+                self.az_angle, 180., 180., dt)
             self.x = self.x + delta_x_0
             self.y = self.y + delta_y_0
-            self.heading = self.heading + delta_r_0
-            print(self.x, self.y)
+            # self.heading = self.heading + delta_r_0
+            self.spawn_location = (500 + int(self.x * self.pixel_meter_ratio),500 - int(self.y * self.pixel_meter_ratio))
+            # self.spawn_location[1] = int(self.y * self.pixel_meter_ratio)
+            print(self.rpm_const, self.az_angle)
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -103,14 +121,15 @@ class Kernel:
         
             # self.t_reg = time.time()
         self.screen.fill(self.bg_color)
+        
         self.update_tugboat_img(self.spawn_location[0], self.spawn_location[1])
-        orientation and line
+        # orientation and line
         pygame.display.update()
 
     
 settings = None
 if __name__ == '__main__':
-    a = Kernel(settings)
+    a = Kernel(settings, ship, ship_model, coef_)
     while True:
         a.main_loop()
    

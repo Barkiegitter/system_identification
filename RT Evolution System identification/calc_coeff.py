@@ -6,6 +6,8 @@ from sklearn.linear_model import Ridge
 import matplotlib.pyplot as plt
 import math
 
+
+from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import GridSearchCV
 ##
 from ship_class import ship
@@ -66,9 +68,9 @@ df_main['az_speed_2'] = df_main.rsa_2.diff()
 
 
 #azimuth 2 port side
-df_main['u_a_2'] = (1-ship.w)*((-df_main.u-df_main.r*abs(ship.y_2))*np.cos(np.deg2rad(df_main.rsa_2)) + (-df_main.v-df_main.r*abs(ship.x_2))*np.sin(np.deg2rad(df_main.rsa_2))) #(1-ship.w)*
-df_main['u_a_1'] = (1-ship.w)*((-df_main.u+df_main.r*abs(ship.y_1))*np.cos(np.deg2rad(df_main.rsa_1)) + (-df_main.v-df_main.r*abs(ship.x_1))*np.sin(np.deg2rad(df_main.rsa_1))) #(1-ship.w)*
-df_main['u_a_0'] = (1-ship.w)*((df_main.u)*-1*np.cos(np.deg2rad(df_main.rsa_0)) + ((-df_main.v + df_main.r*abs(ship.x_0))*np.sin(np.deg2rad(df_main.rsa_0))) ) #(1-ship.w)*
+df_main['u_a_2'] = (1-ship.w)*((-df_main.u+df_main.r*abs(ship.y_2))*np.cos(np.deg2rad(df_main.rsa_2)) + (-df_main.v+df_main.r*abs(ship.x_2))*np.sin(np.deg2rad(df_main.rsa_2))) #(1-ship.w)*
+df_main['u_a_1'] = (1-ship.w)*((-df_main.u-df_main.r*abs(ship.y_1))*np.cos(np.deg2rad(df_main.rsa_1)) + (-df_main.v+df_main.r*abs(ship.x_1))*np.sin(np.deg2rad(df_main.rsa_1))) #(1-ship.w)*
+df_main['u_a_0'] = (1-ship.w)*((df_main.u)*+1*np.cos(np.deg2rad(df_main.rsa_0)) + ((-df_main.v - df_main.r*abs(ship.x_0))*np.sin(np.deg2rad(df_main.rsa_0))) ) #(1-ship.w)*
 
 
 # df_main['u_a_2'] =  df_main.u
@@ -94,15 +96,15 @@ df_main['beta_0'] = df_main.beta_0.apply(lambda x: x+360 if x<0 else x)
 # first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
 df_main['t_21_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']), axis=1)
 df_main['t_20_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_0, ship.y_0, row['rsa_0'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']), axis=1)
-df_main['f_p_40_2'] = 0.6*((1-ship.t)*ship.beta_coef(df_main.beta_2)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_2)**2)+(0.7*np.pi*df_main.rpm_2*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*
+df_main['f_p_40_2'] = 1.0*((1-ship.t)*ship.beta_coef(df_main.beta_2)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_2)**2)+(0.7*np.pi*df_main.rpm_2*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])*
 ##*(1-df_main['t_21_phi'])*(1-df_main['t_20_phi'])
 df_main['t_12_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_2, ship.y_2, row['rsa_2'], 25.0, 100.0, ship.x_1, ship.y_1, row['rsa_1']), axis=1)
 df_main['t_10_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_0, ship.y_0, row['rsa_0'], 25.0, 100.0, ship.x_1, ship.y_1, row['rsa_1']), axis=1)
-df_main['f_p_40_1'] = 0.6*((1-ship.t)*ship.beta_coef(df_main.beta_1)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_1)**2)+(0.7*np.pi*df_main.rpm_1*ship.D_p)**2))*np.pi/4*ship.D_p**2) #(1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])*
+df_main['f_p_40_1'] = 1.0*((1-ship.t)*ship.beta_coef(df_main.beta_1)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_1)**2)+(0.7*np.pi*df_main.rpm_1*ship.D_p)**2))*np.pi/4*ship.D_p**2) #(1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])*
 #*(1-df_main['t_12_phi'])*(1-df_main['t_10_phi'])
 df_main['t_02_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_2, ship.y_2, row['rsa_2'], 25.0, 100.0, ship.x_0, ship.y_0, row['rsa_0']), axis=1)
 df_main['t_01_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_0, ship.y_0, row['rsa_0']), axis=1)
-df_main['f_p_40_0'] = 0.6*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+(0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
+df_main['f_p_40_0'] = 1.0*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+(0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**2)  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
 # 
 # (1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
 # J =(1-w)*u/(n_p*D_p);                                                               % Advance ratio of the propeller   J =(1-w)*u/(n_p*D_p)
@@ -143,7 +145,6 @@ rsa_0 = df_main.rsa_0.to_numpy()[:, newaxis]
 rsa_1 = df_main.rsa_1.to_numpy()[:, newaxis]
 rsa_2 = df_main.rsa_2.to_numpy()[:, newaxis]
 
-rv = df_main.rv.to_numpy()[:, newaxis]
 az_speed_0 = df_main.az_speed_0.to_numpy()[:, newaxis]
 az_speed_1 = df_main.az_speed_1.to_numpy()[:, newaxis]
 az_speed_2 = df_main.az_speed_2.to_numpy()[:, newaxis]
@@ -155,130 +156,68 @@ f_p_40_1 = df_main.f_p_40_1.to_numpy()[:, newaxis]
 # X = u uu uuu vv rr vr uvv rvu urr
 # Y = v uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 # N = r uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
-X = np.concatenate([u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
-# X = np.concatenate([u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r, az_speed_0*abs(u)*np.sin(np.rad2deg(rsa_0)),az_speed_2*abs(u)*np.sin(np.rad2deg(rsa_2)),az_speed_1*abs(u)*np.sin(np.rad2deg(rsa_1))], axis=1)
-# X = np.concatenate([u_dot, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
-# Y = np.concatenate([v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
-Y = np.concatenate([v, v*v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
-
-N = np.concatenate([r_dot, r,r*r, v*r, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
+X = np.concatenate([u_dot, u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
+Y = np.concatenate([v_dot, v, v*v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
+N = np.concatenate([r_dot, r,r*r, v*r, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r ], axis=1)
 
 y_x = ship.Mass*(u_dot-r*v)+1*(np.cos(np.deg2rad(rsa_0))*(f_p_40_0)+np.cos(np.deg2rad(rsa_1))*(f_p_40_1)+np.cos(np.deg2rad(rsa_2))*(f_p_40_2))
 y_y = ship.Mass*(v_dot+r*u)+1*(np.sin(np.deg2rad(rsa_0))*(f_p_40_0)+np.sin(np.deg2rad(rsa_1))*(f_p_40_1)+np.sin(np.deg2rad(rsa_2))*(f_p_40_2)) #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
-y_r = ship.I_e*r_dot - 1*(-abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*(f_p_40_0) + abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*(f_p_40_2) + (ship.x_1)*np.sin(np.deg2rad(rsa_1))*(f_p_40_1) - abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*(f_p_40_1))
+y_r = ship.I_e*r_dot + 1*(abs(ship.x_0)*np.sin(np.deg2rad(rsa_0))*(f_p_40_0) - abs(ship.x_2)*np.sin(np.deg2rad(rsa_0))*(f_p_40_2) - (ship.x_1)*np.sin(np.deg2rad(rsa_1))*(f_p_40_1) - abs(ship.y_2)*np.cos(np.deg2rad(rsa_2))*(f_p_40_2) + abs(ship.y_1)*np.cos(np.deg2rad(rsa_1))*(f_p_40_1))
 
 
-# array_export = pairs = [(X, y_x, 'X'), (Y, y_y, 'Y'), (N, y_r, 'N')]
-lasso_X = Lasso()
-# parameters={'alpha':[1e-15,1e-10,1e-8,1e-3,1e-2,1,5,20,35,40,45,50,15000]}
-# parameters={'alpha':np.linspace(0.001,11,1001).tolist()}
-# ridge_regressor_X=GridSearchCV(lasso_X,parameters, cv=5)
-# ridge_regressor_X.fit(X,y_x)
+model = Ridge(fit_intercept=False)
+cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=1)
+grid = dict()
+grid['alpha'] = np.arange(0.001, 0.011, 0.001)
+search = GridSearchCV(model, grid, scoring='neg_mean_absolute_error', cv=cv, n_jobs=-1)
+results_x = search.fit(X, y_x)
+
+model = Ridge(fit_intercept=False)
+cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=1)
+grid = dict()
+grid['alpha'] = np.arange(0.001, 0.011, 0.001)
+search = GridSearchCV(model, grid, scoring='neg_mean_absolute_error', cv=cv, n_jobs=-1)
+results_y = search.fit(Y, y_y)
+
+model = Ridge(fit_intercept=False)
+cv = RepeatedKFold(n_splits=10, n_repeats=3, random_state=1)
+grid = dict()
+grid['alpha'] = np.arange(0.001, 0.011, 0.001)
+search = GridSearchCV(model, grid, scoring='neg_mean_absolute_error', cv=cv, n_jobs=-1)
+results_r = search.fit(N, y_r)
+
+print(results_x.best_estimator_.score(X,y_x), results_x.best_estimator_.alpha)
+print(results_y.best_estimator_.score(Y,y_y), results_y.best_estimator_.alpha)
+print(results_r.best_estimator_.score(N,y_r), results_r.best_estimator_.alpha)
 
 
-
-best_alpha = 0.
-best_score = 0.
-# for alpha in [0.0]:# np.logspace(-9,4,101):
-#     clf=Lasso(alpha=alpha, fit_intercept=False, tol=0.01,
-#               max_iter=100000000)
-#     clf.fit(X,y_x)
-#     print(alpha)
-#     if clf.score(X,y_x)>best_score:
-#         best_score = clf.score(X,y_x)
-#         best_alpha = alpha
-
-clf_X=Ridge(alpha=0, fit_intercept=False, tol=.01)
-              # max_iter=1000000000)
-              # y_r.reshape(y_r.shape[1],y_r.shape[0])
-clf_X.fit(X,y_x)
-# ,sample_weight=(1/abs(y_x.reshape(y_x.shape[1],y_x.shape[0]))**0.9).tolist()[0]
-clf_Y=Ridge(alpha=0, fit_intercept=False, tol=.01)
-              # max_iter=1000000000)
-clf_Y.fit(Y,y_y)
-
-clf_N=Ridge(alpha=0, fit_intercept=False, tol=.01)
-              # max_iter=1000000000)
-clf_N.fit(N,y_r)
-# ,sample_weight=(1/(abs(y_r.reshape(y_r.shape[1],y_r.shape[0])))).tolist()[0]
-# lasso_Y = Lasso()
-# parameters={'alpha':[1e-15,1e-10,1e-8,1e-3,1e-2,1,5,10,20,30,35,40,45,50,55,100]}
-# ridge_regressor_Y=GridSearchCV(lasso_Y,parameters,scoring='neg_mean_squared_error', cv=7)
-# ridge_regressor_Y.fit(Y,y_y)
-
-
-# lasso_N = Lasso()
-# parameters={'alpha':[1e-15,1e-10,1e-8,1e-3,1e-2,1,5,10,20,30,35,40,45,50,55,100]}
-# ridge_regressor_N=GridSearchCV(lasso_N,parameters,scoring='neg_mean_squared_error', cv=7)
-# ridge_regressor_N.fit(N,y_r)
-
-
-# print(ridge_regressor_Y.best_estimator_.score(Y, y_y))
-# print(ridge_regressor_X.best_estimator_.score(X, y_x))
-print(clf_X.score(X,y_x), best_alpha)
-print(clf_Y.score(Y,y_y), best_alpha)
-
-print(clf_N.score(N,y_r), best_alpha)
-
-# print(ridge_regressor_N.best_estimator_.score(N, y_r))
-
-
-
-
-
-# a = np.asarray([np.concatenate([clf_X.coef_[0],np.zeros(len(clf_Y.coef_[0])-len(clf_X.coef_[0]))]), clf_Y.coef_[0], clf_N.coef_[0]])
-# np.savetxt("foo.csv", a, delimiter=",")
-
-# import numpy as np
-# x = np.linspace(0, 1, len(y_x) + 1)[0:-1]
-# import matplotlib.pyplot as plt
-# fig, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-# ax1.plot(df_main.f_p_40_0, 'b-')
-# ax1.plot(df_main.f_p_40_1, 'g-')
-# ax1.plot(df_main.u_a_2, 'r-')
-# ax2.plot(df_main.f_p_40_0)
-# ax1.set_xlabel('X data')
-# ax1.set_ylabel('Y1 data', color='g')
-# ax2.set_ylabel('Y2 data', color='b')
-
-# plt.show()
-
-# plt.plot(np.sum(X*lasso_X.coef_, axis=1))
-# plt.plot(np.sum(N*ridge_regressor_N.best_estimator_.coef_, axis=1));plt.plot(y_r)
-# plt.plot(np.sum(X*ridge_regressor_X.best_estimator_.coef_, axis=1));plt.plot(y_x)
-plt.plot(np.sum(X*clf_X.coef_, axis=1));plt.plot(y_x)
+plt.plot(y_x)
+plt.plot(np.sum(X*results_x.best_estimator_.coef_, axis=1))
 plt.show()
 plt.close()
-plt.plot(df_main.u_dot)
+plt.plot(np.sum(Y*results_y.best_estimator_.coef_, axis=1));plt.plot(y_y)
 plt.show()
 plt.close()
-plt.plot(np.sum(Y*clf_Y.coef_, axis=1));plt.plot(y_y)
-plt.show()
-plt.close()
-plt.plot(np.sum(N*clf_N.coef_, axis=1));plt.plot(y_r)
-# plt.ylim(-1e7,1e7)
-
-# plt.plot(np.sum(Y*ridge_regressor_Y.best_estimator_.coef_, axis=1));plt.plot(y_y)
-
-
+plt.plot(np.sum(N*results_r.best_estimator_.coef_, axis=1));plt.plot(y_r)
 plt.show()
 plt.close()
 
-plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
 
-plt.show()
 
-# build model like mikhail
-# think of algorithm to improve MSE with iteration between engine param and hydrocoefficients (including randomizer)
 
-# for i in np.linspace(0.001, 1.0, num=100, endpoint=False):
-# lasso = Lasso()
-# parameters = {'alpha' : [1e-15, 1e-10, 1e-8, 1e-4, 1e-3, 1e-2, 1, 5, 10, 20]}
-# lasso_regressor = GridSearchCV(lasso, parameters, cv=1000) #, scoring='neg_mean_squared_error'
-# lasso_regressor.fit(pair[0], pair[1])
-# print(lasso_regressor.best_params_)
-# print(lasso_regressor.best_score_)
-#
-# plt.plot(df_main.f_p_4Q_0)
-# plt.show()
+a_list = [list(results_x.best_estimator_.coef_[0]),list(results_y.best_estimator_.coef_[0]),list(results_r.best_estimator_.coef_[0])]
+row_lengths = []
+
+for row in a_list:
+    row_lengths.append(len(row))
+
+max_length = max(row_lengths)
+
+for row in a_list:
+    while len(row) < max_length:
+        row.append(None)
+
+balanced_array = np.array([np.asarray(a_list[0]),np.asarray(a_list[1]),np.asarray(a_list[2])])
+# a = np.asarray([results_x.best_estimator_.coef_,results_y.best_estimator_.coef_,results_r.best_estimator_.coef_])
+np.savetxt("foo_evo.csv", balanced_array, delimiter=",", fmt='%s')
+

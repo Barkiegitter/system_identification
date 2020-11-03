@@ -21,7 +21,6 @@ with open(os.path.join(package_dir, 'ct_fourier_thrust_coefficients')) as reader
 # plt.plot(x, f2(x))
 # plt.show()
 
-
 class ship:
     def __init__(self):
         self.L_oa = 17.59
