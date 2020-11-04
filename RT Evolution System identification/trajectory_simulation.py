@@ -13,10 +13,10 @@ from ship_class import ship
 from manoeuvre_model_evo import ship_model
 ship = ship()
 
-df_main = pd.read_csv('test_1.csv', sep=',')
+df_main = pd.read_csv('test_1_morechill.csv', sep=',')
 coef_ = np.genfromtxt('foo_evo.csv', delimiter=',')
 
-df_main = df_main[20:-500]
+df_main = df_main[20:750]
 u, v, r, hdg = df_main.loc[df_main.index[0], 'u'],df_main.loc[df_main.index[0], 'v'], df_main.loc[df_main.index[0], 'r'], df_main.loc[df_main.index[0], 'hdg']
 ship_model = ship_model(df_main.loc[df_main.index[0], 'u_dot'],df_main.loc[df_main.index[0], 'v_dot'], df_main.loc[df_main.index[0], 'r_dot'], ship, coef_)
 

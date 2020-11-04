@@ -12,7 +12,7 @@ from sklearn.model_selection import GridSearchCV
 ##
 from ship_class import ship
 ship = ship()
-df_main = pd.read_csv('test_1.csv', sep=',')
+df_main = pd.read_csv('test_1_morechill.csv', sep=',')
 # df_main = df_main[30400:31600].reset_index(inplace=False)
 df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 df_main = df_main.dropna()
@@ -158,7 +158,7 @@ f_p_40_1 = df_main.f_p_40_1.to_numpy()[:, newaxis]
 # N = r uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 X = np.concatenate([u_dot, u, u*u, u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
 Y = np.concatenate([v_dot, v, v*v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
-N = np.concatenate([r_dot, r,r*r, v*r, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r ], axis=1)
+N = np.concatenate([r_dot, u_dot, v_dot, r,r*r, v*r, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r ], axis=1)
 
 y_x = ship.Mass*(u_dot-r*v)+1*(np.cos(np.deg2rad(rsa_0))*(f_p_40_0)+np.cos(np.deg2rad(rsa_1))*(f_p_40_1)+np.cos(np.deg2rad(rsa_2))*(f_p_40_2))
 y_y = ship.Mass*(v_dot+r*u)+1*(np.sin(np.deg2rad(rsa_0))*(f_p_40_0)+np.sin(np.deg2rad(rsa_1))*(f_p_40_1)+np.sin(np.deg2rad(rsa_2))*(f_p_40_2)) #np.sin(rsa_0)*abs(f_p_40_0)+np.sin(rsa_1)*abs(f_p_40_1)+
@@ -204,6 +204,14 @@ plt.close()
 
 
 
+# model analysis max acc
+
+# u_acc, v_acc, r_acc min max
+
+# delta u_acc, delta v_acc, delta r_acc min max
+
+
+
 
 a_list = [list(results_x.best_estimator_.coef_[0]),list(results_y.best_estimator_.coef_[0]),list(results_r.best_estimator_.coef_[0])]
 row_lengths = []
@@ -219,5 +227,5 @@ for row in a_list:
 
 balanced_array = np.array([np.asarray(a_list[0]),np.asarray(a_list[1]),np.asarray(a_list[2])])
 # a = np.asarray([results_x.best_estimator_.coef_,results_y.best_estimator_.coef_,results_r.best_estimator_.coef_])
-np.savetxt("foo_evo.csv", balanced_array, delimiter=",", fmt='%s')
+# np.savetxt("foo_evo_morechill.csv", balanced_array, delimiter=",", fmt='%s')
 

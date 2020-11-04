@@ -4,7 +4,7 @@ import math
 
 # read coef from csv
 from ship_class import ship
-coef_ = np.genfromtxt('foo_evo.csv', delimiter=',')
+coef_ = np.genfromtxt('foo_evo_morechill.csv', delimiter=',')
 
 
 
@@ -219,7 +219,7 @@ class ship_model:
         next_v = v + self.v_dot * dt
         next_r = r + self.r_dot * dt
         
-        # print(self.u_dot, self.v_dot, self.r_dot, heading)
+        print(self.u_dot, self.v_dot, self.r_dot, heading)
         
         delta_x_0 = (u * np.sin(np.deg2rad(heading)) + v * np.cos(np.deg2rad(heading))) * dt
     

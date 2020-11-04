@@ -15,31 +15,28 @@ ship = ship()
 coef_ = np.genfromtxt('foo_rpa3.csv', delimiter=',')
 
 
-
-
-
-P_range = np.arange(0,10.2,0.2)
-I_range = np.arange(0,10.2,0.2)
-D_range = np.arange(0,10.2,0.2)
+# P_range = np.arange(0,10.2,0.2)
+# I_range = np.arange(0,10.2,0.2)
+# D_range = np.arange(0,10.2,0.2)
 
 #initialise ship
 u, v, r, hdg = 0,0,0,0
 ship_model = ship_model(0,0,0, ship, coef_)
-max_rpm_second = 0.5
+max_rpm_second = 0.3
 rpm = 0 
 
 
 
 
 # (speed, time)
-speed_u = [(0, 0), (5, 20), (9, 140), (2, 250)]
+speed_u = [(0, 0), (3, 20), (7, 140), (4, 250), (9, 450)]
 end_input = 0
 speed_u_position = 0
 current_speed_setting = 0
 t = 0
-dt = 0.4 #future noise
-t_end = 400
-pid_speed = PID(P=25.6, I=-0.04646, D=2.653)
+dt = 0.4 #future: add noise
+t_end = 600
+pid_speed = PID(P=25.6, I=-0.04, D=2.653) # -0.04646
 
 #
 u_ref = []
@@ -68,6 +65,9 @@ while t<t_end:
             rpm = np.sign(rpm)*abs(pid_speed.Integrator_max)
     # print(rpm)
     # model
+    if rpm<-0.5:
+        rpm = -0.5
+    
     u, v, r, hdg, delta_x_0, delta_y_0, delta_r_0, u_dot, v_dot, r_dot = ship_model.manoeuvre_model_rpa_3(u, v, r, hdg,
                                                                                                    rpm,
                                                                                                    0,#rudder 
@@ -92,7 +92,7 @@ plt.plot(u_ref)
 plt.plot(u_real)
 plt.plot(rpm_set)
 
-
+plt.savefig('tuner.png')
 plt.show()
 
 
