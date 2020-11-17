@@ -48,8 +48,8 @@ class ship:
         self.rho = 1029.
         self.v_max = 12.5*0.5144
         self.C_b = self.Disp/(self.L_fl*self.T*self.B)
-        self.Mass = self.Disp*self.rho
-        self.I_e = 1/120*3.14*self.rho*self.L_fl*self.B*self.T*(self.B**2+self.L_fl**2)
+        self.Mass = self.Disp*self.rho*5.0
+        self.I_e = 1/120*3.14*self.rho*self.L_fl*self.B*self.T*(self.B**2+self.L_fl**2)*20
         self.I_z = self.Mass*(0.25*self.L_fl)**2
         self.w = 2*(self.C_b**5)*(1-self.C_b) + 0.1
         self.D_p = 2.36
@@ -101,12 +101,12 @@ class ship:
         self.fourier_y = fourier_ct_array_y
         self.interpolate_f = interp1d(fourier_ct_array_x, fourier_ct_array_y, kind='linear')
         
-        # self.interpolate_f2 = interp2d(grid_prop_four_points[:,0],grid_prop_four_points[:,1],grid_prop_four_values, kind='cubic')
+        self.interpolate_f2 = interp2d(grid_prop_four_points[:,0],grid_prop_four_points[:,1],grid_prop_four_values, kind='cubic')
 
     def beta_coef(self, beta):
-        return self.interpolate_f(beta)
+        # return self.interpolate_f(beta)
     # def beta_coef(self, beta):
-    #     return self.interpolate_f2(beta, self.pr)
+        return self.interpolate_f2(beta, self.pr)[0]
 
 
 

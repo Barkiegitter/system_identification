@@ -105,7 +105,9 @@ df_main['delta_psi_dot'] = df_main.delta_psi / df_main.delta_time
 # df_main.delta_psi_dot = df_main.delta_psi_dot.shift(-MA_bound_acc_r)
 
 df_main['u'] = df_main.apply(lambda row: row.x_dot * np.sin(np.deg2rad(row.hdg)) + row.y_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
-df_main['v'] = df_main.apply(lambda row: -row.y_dot * np.sin(np.deg2rad(row.hdg)) + row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
+df_main['v'] = df_main.apply(lambda row: row.y_dot * np.sin(np.deg2rad(row.hdg)) - row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
+# df_main['v'] = df_main.apply(lambda row: -row.y_dot * np.sin(np.deg2rad(row.hdg)) + row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
+
 df_main['r'] = df_main.delta_psi_dot.apply(lambda x: np.deg2rad(x))
 
 # plt.plot(df_main.delta_psi_dot_1)
@@ -139,7 +141,7 @@ df_main['y_real'] = df_main.y.cumsum()
 df_main['psi'] = df_main.delta_psi.cumsum()
 # plt.plot(np.sqrt(df_main.u**2+df_main.v**2).tolist()[:1000])
 # plt.plot(np.sqrt(df_main.x_dot**2+df_main.y_dot**2).tolist()[:1000])
-plt.plot(df_main.rpm)
+plt.plot(df_main.r)
 # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
 # plt.plot(df_main.rpm_0.tolist())
 # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])

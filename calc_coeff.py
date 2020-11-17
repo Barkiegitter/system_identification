@@ -28,7 +28,7 @@ df_main['beta'] = np.rad2deg(np.arctan((df_main.u)/(0.7*np.pi*df_main.rpm*ship.D
 df_main['beta'] = df_main.beta.apply(lambda x: x-360 if x>360.0 else (x+360 if x<0.0 else x))
 df_main['f_p_40'] = (1-ship.t)*ship.beta_coef(df_main.beta)*0.5*ship.rho*(((((1-ship.w)*df_main.u)**2)+ (0.7*np.pi*df_main.rpm*ship.D_p)**2))*np.pi/4*ship.D_p**2
 # df_main['f_p_40'] = df_main.apply(lambda row: 0 if row['rpm']<5 and row['rpm']>-5 else row['f_p_40'], axis=1 )
-#%%
+
 df_main['u_dot_spec'] = df_main.u_dot.shift(1)
 df_main = df_main[2:]
 
@@ -48,15 +48,20 @@ u_dot_spec = df_main.u_dot_spec.to_numpy()[:, newaxis]
 
 ones = np.ones((len(u_dot),1))
 
-X = np.concatenate([u_dot_spec, u*u, u*u*u, u*v, u*r, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
+X = np.concatenate([u_dot, u*u, u*u*u, u*v, u*r, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r], axis=1)
 Y = np.concatenate([v_dot,v, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 N = np.concatenate([r_dot,r, u*v, u*r, u*u*r, u*u*v, v*v*v, r*r*r, r*r*v, v*v*r, abs(v)*v, abs(r)*v, r*abs(v), abs(r)*r], axis=1)
 
-F_r = -21.1* ship.A_r*u*u*rsa
+F_r = -21.1* ship.A_r*u*u*np.deg2rad(rsa)
 y_x = ship.Mass*(u_dot_spec-r*v)-2.0*f_p_40 - F_r*np.sin(np.deg2rad(rsa))
 y_y = ship.Mass*(v_dot+r*u)-F_r*np.cos(np.radians(rsa))
 y_r = ship.I_e*r_dot - F_r*ship.x_r*np.cos(np.radians(rsa))
 
+# F_r = -21.1* ship.A_r*u*u*rsa
+# y_x = ship.Mass*(u_dot_spec-r*v)-2.0*f_p_40 - F_r*np.sin(np.deg2rad(rsa))
+# y_y = ship.Mass*(v_dot+r*u)-F_r*np.cos(np.radians(rsa))
+# y_r = ship.I_e*r_dot - F_r*ship.x_r*np.cos(np.radians(rsa))
+#%%
 model = Ridge(fit_intercept=False)
 cv = RepeatedKFold(n_splits=10, n_repeats=3, random_state=1)
 grid = dict()

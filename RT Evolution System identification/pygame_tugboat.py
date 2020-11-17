@@ -14,8 +14,9 @@ from manoeuvre_model_evo import ship_model
 from ship_class import ship
 # ship = ship()
 
-df_main = pd.read_csv('test_1.csv', sep=',')
-coef_ = np.genfromtxt('foo_evo.csv', delimiter=',')
+df_main = pd.read_csv('test_1_large.csv', sep=',')
+coef_ = np.genfromtxt('foo_evo_general.csv', delimiter=',')
+acc_lim = np.genfromtxt('acc_limits.csv', delimiter=',')
 
 df_main = df_main[20:-500]
 u, v, r, hdg = df_main.loc[df_main.index[0], 'u'],df_main.loc[df_main.index[0], 'v'], df_main.loc[df_main.index[0], 'r'], df_main.loc[df_main.index[0], 'hdg']
@@ -24,7 +25,7 @@ u, v, r, hdg = df_main.loc[df_main.index[0], 'u'],df_main.loc[df_main.index[0], 
 df_input = df_main[['rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']]
 
 class Kernel:
-    def __init__(self, settings, ship, ship_model, coef_):
+    def __init__(self, settings, ship, ship_model, coef_, acc_lim):
         pygame.init()
         self.screen_size = (1000, 1000) #width height
         self.screen = pygame.display.set_mode(self.screen_size)
@@ -55,7 +56,8 @@ class Kernel:
         self.r_dot = 0.0
         self.coef_ = coef_
         self.ship = ship()
-        self.ship_model = ship_model(0,0,0,self.ship,self.coef_)
+        self.acc_lim = acc_lim
+        self.ship_model = ship_model(0,0,0,self.ship,self.coef_, self.acc_lim)
 
 
 
@@ -129,7 +131,7 @@ class Kernel:
     
 settings = None
 if __name__ == '__main__':
-    a = Kernel(settings, ship, ship_model, coef_)
+    a = Kernel(settings, ship, ship_model, coef_, acc_lim)
     while True:
         a.main_loop()
    

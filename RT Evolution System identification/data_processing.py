@@ -23,23 +23,33 @@ def haversine(lon1, lat1, lon2, lat2):
 # from math import radians, cos, sin, asin, sqrt
 ###%
 
-mean_period = 16
+# mean_period = 2
+# shift_period = int(mean_period/2)
+
+# mean_period_delta_psi = 2
+# shift_period_delta_psi = int(mean_period/2)
+
+# mean_period_dot = 2
+# shift_period_dot = int(mean_period/2)
+
+
+mean_period = 20  #6
 shift_period = int(mean_period/2)
 
-mean_period_delta_psi = 8
+mean_period_delta_psi = 50  #50
 shift_period_delta_psi = int(mean_period/2)
 
-mean_period_dot = 18
+mean_period_dot = 20
 shift_period_dot = int(mean_period/2)
 
 
 manoeuvres = ['circle_left','astern','zigzag_20' , 'zigzag_10', 'circle_right']
-manoeuvres = ['all']
+manoeuvres = ['cruise_manoeuvres_morechill', 'cruise_manoeuvres' ]
 # manoeuvres = ['circle_left']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
-    # file_path = './Autopilot_light/RT_Evolution_manoeuvre_' + manoeuvre + '_2020-08-18.csv'
-    file_path = './Autopilot_light/' + 'cruise_manoeuvres_morechill.csv'
+    file_path = './Autopilot_light/' + manoeuvre + '.csv'
+    # file_path = './Autopilot_light/' + 'precision_manoeuvres.csv'
     df_main = pd.read_csv(file_path, sep=',')
     df_main.columns = ['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
     df_main = df_main.drop_duplicates(subset=['timestamp', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2'])[1:]
@@ -56,7 +66,7 @@ for manoeuvre in manoeuvres:
     df_main['timestamp_norm'] = df_main.timestamp.apply(lambda x: (x-time_begin).total_seconds())
     # df_main.hdg = df_main.hdg + 4.2
     df_main = df_main[10:]
-    df_main = df_main[:-200]
+    # df_main = df_main[:500]
     # df_main = df_main.iloc[::4]
     
     ##
@@ -72,7 +82,7 @@ for manoeuvre in manoeuvres:
     for i in df_main[1:].index:
         df_main.loc[i, 'x'] = np.sign(df_main.loc[i, 'lon'] - df_main.loc[i - 1, 'lon']) * haversine(df_main.loc[i - 1, 'lon'], df_main.loc[i, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
         df_main.loc[i, 'y'] = np.sign(df_main.loc[i, 'lat'] - df_main.loc[i - 1, 'lat']) * haversine(df_main.loc[i, 'lon'], df_main.loc[i - 1, 'lat'], df_main.loc[i, 'lon'], df_main.loc[i, 'lat'])
-        if abs(df_main.loc[i,'hdg'] - df_main.loc[i-1,'hdg'])>360.0:
+        if abs(df_main.loc[i,'hdg'] - df_main.loc[i-1,'hdg'])>300.0:
             if df_main.loc[i,'hdg'] > df_main.loc[i-1,'hdg'] :
                 df_main.loc[i, 'delta_psi'] = df_main.loc[i,'hdg'] - 360 - df_main.loc[i-1,'hdg']
             elif df_main.loc[i,'hdg'] < df_main.loc[i-1,'hdg'] :
@@ -84,44 +94,52 @@ for manoeuvre in manoeuvres:
     # df_main.y = df_main.y[df_main.y.between(df_main.y.quantile(.01), df_main.y.quantile(.99))]
     # df_main.delta_psi = df_main.delta_psi[df_main.delta_psi.between(df_main.delta_psi.quantile(.01), df_main.delta_psi.quantile(.999999))]
     # df_main = df_main[abs(df_main.delta_psi)<20.0]
+    
+    
+    
     df_main['x'] = ((df_main.delta_time.shift(shift_period)*df_main.x.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
     df_main['y'] = ((df_main.delta_time.shift(shift_period)*df_main.y.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
     df_main['delta_psi'] = ((df_main.delta_time.shift(shift_period_delta_psi)*df_main.delta_psi.shift(shift_period_delta_psi)).rolling(mean_period_delta_psi).sum()) / df_main.delta_time.shift(shift_period_delta_psi).rolling(window=mean_period_delta_psi).sum()
-    
+
     df_main.x = df_main.x.shift(-mean_period)
     df_main.y = df_main.y.shift(-mean_period)
-    df_main.delta_psi = df_main.delta_psi.shift(mean_period_delta_psi)
+    df_main.delta_psi = df_main.delta_psi.shift(-mean_period_delta_psi)
     
-    df_main = df_main[abs(df_main.delta_psi)<10.] #correct for time in seconds
+    # df_main['x'] = ((df_main.delta_time*df_main.x).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
+    # df_main['y'] = ((df_main.delta_time*df_main.y).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
+    # df_main['delta_psi'] = ((df_main.delta_time*df_main.delta_psi).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
+    
+    
+    # df_main = df_main[abs(df_main.delta_psi)<10.] #correct for time in seconds
 
     # plt.plot(df_main.y.tolist())
     # plt.show()
     # df_main = df_main[50:]
 
     
-    states = df_main[['x', 'y', 'delta_psi']].to_numpy()
-    states = states.reshape([states.shape[0], 3, 1])
-    # add z score filtering
-    A = np.identity(3)
-    P = np.identity(3)*0
-    #measurement noise
-    Q = np.diag([0.02,0.2,0.006])
-    H = np.identity(3)
-    R = np.diag([0.5, 4.0, 1.0])
-    B = 0
-    u = 0
-    x = inv(H).dot(states[0])
-    P = inv(H).dot(R).dot(inv(H.T))
-    new_states = np.zeros(shape=[1, 3, 1])
-    for state in states:
-        x = A.dot(x)
-        P = A.dot(P).dot(A.T) + Q
-        S = H.dot(P).dot(H.T) + R
-        K = P.dot(H.T).dot(inv(S))
-        x = x + K.dot(state - H.dot(x))
-        P = P - K.dot(H).dot(P)
-        new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
-    new_states = new_states[1:]
+    # states = df_main[['x', 'y', 'delta_psi']].to_numpy()
+    # states = states.reshape([states.shape[0], 3, 1])
+    # # add z score filtering
+    # A = np.identity(3)
+    # P = np.identity(3)*0
+    # #measurement noise
+    # Q = np.diag([0.02,0.2,0.006])
+    # H = np.identity(3)
+    # R = np.diag([0.5, 4.0, 1.0])
+    # B = 0
+    # u = 0
+    # x = inv(H).dot(states[0])
+    # P = inv(H).dot(R).dot(inv(H.T))
+    # new_states = np.zeros(shape=[1, 3, 1])
+    # for state in states:
+    #     x = A.dot(x)
+    #     P = A.dot(P).dot(A.T) + Q
+    #     S = H.dot(P).dot(H.T) + R
+    #     K = P.dot(H.T).dot(inv(S))
+    #     x = x + K.dot(state - H.dot(x))
+    #     P = P - K.dot(H).dot(P)
+    #     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
+    # new_states = new_states[1:]
 
     # plt.plot(df_main.delta_psi.tolist())
     # df_main.x = new_states[:, 0, :];
@@ -163,10 +181,24 @@ for manoeuvre in manoeuvres:
     df_main.v = df_main.v.shift(-mean_period)
     df_main.r = df_main.r.shift(-mean_period)
     
+    
+    # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
+    # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
+    # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
+    
+    
+    
+    # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
+    # df_main.v = ((df_main.delta_time*df_main.v).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
+    # df_main.r = ((df_main.delta_time*df_main.r).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
+    
+    
 
     df_main['u_dot'] = (df_main.u - df_main.u.shift(1))/df_main.delta_time
     df_main['v_dot'] = (df_main.v - df_main.v.shift(1))/df_main.delta_time
     df_main['r_dot'] = (df_main.r - df_main.r.shift(1))/df_main.delta_time
+    
+    
     
     df_main.u_dot = ((df_main.delta_time.shift(shift_period_dot)*df_main.u_dot.shift(shift_period_dot)).rolling(mean_period_dot).sum()) / df_main.delta_time.shift(shift_period_dot).rolling(window=mean_period_dot).sum()
     df_main.v_dot = ((df_main.delta_time.shift(shift_period_dot)*df_main.v_dot.shift(shift_period_dot)).rolling(mean_period_dot).sum()) / df_main.delta_time.shift(shift_period_dot).rolling(window=mean_period_dot).sum()
@@ -176,20 +208,26 @@ for manoeuvre in manoeuvres:
     df_main.v_dot = df_main.v_dot.shift(-mean_period_dot)
     df_main.r_dot = df_main.r_dot.shift(-mean_period_dot)
 
+    # df_main.u_dot = ((df_main.delta_time*df_main.u_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
+    # df_main.v_dot = ((df_main.delta_time*df_main.v_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
+    # df_main.r_dot = ((df_main.delta_time*df_main.r_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
+    
+    
+    
     
     df_main['x_real'] = df_main.x.cumsum()
     df_main['y_real'] = df_main.y.cumsum()
     df_main['psi'] = df_main.delta_psi.cumsum()
     # plt.plot(np.sqrt(df_main.u**2+df_main.v**2).tolist()[:1000])
     # plt.plot(np.sqrt(df_main.x_dot**2+df_main.y_dot**2).tolist()[:1000])
-    # plt.plot(df_main.r_dot)
+    # plt.plot(df_main.f_p_40_0)
     # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
     # plt.plot(df_main.rpm_0.tolist())
     # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
 
     plt.show()
     df_all = pd.concat([df_all, df_main], axis=0)
-df_all.to_csv('test_1_morechill.csv', index =False)
+df_all.to_csv('test_1_large.csv', index =False)
 
 
 

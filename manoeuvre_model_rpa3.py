@@ -41,7 +41,7 @@ class ship_model:
         
         if rpm==0.1:
             f_p_4Q=0
-        F_r = -21.1* self.ship.A_r*u*u*rsa
+        F_r = -21.1* self.ship.A_r*u*u*np.deg2rad(rsa)
         # print(f_p_4Q)
 
         
