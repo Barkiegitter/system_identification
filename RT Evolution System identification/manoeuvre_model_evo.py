@@ -207,7 +207,7 @@ class ship_model:
                                )
                                
         self.u_dot = (surge_partial_force + r * v * self.ship.Mass + 1 *(-1*np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)-np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)-np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2)))/ (self.ship.Mass-self.coef_[0][0])
-        print(u, surge_partial_force,-1*np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)-np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)-np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2))
+        # print(u, surge_partial_force,-1*np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)-np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)-np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2))
         sway_partial_force = (#self.coef_[1][0] * self.v_dot +
                               self.coef_[1][1] * v +
                               self.coef_[1][2] * v * v +

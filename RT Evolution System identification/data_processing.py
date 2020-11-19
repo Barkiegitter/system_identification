@@ -44,7 +44,7 @@ shift_period_dot = int(mean_period/2)
 
 
 manoeuvres = ['circle_left','astern','zigzag_20' , 'zigzag_10', 'circle_right']
-manoeuvres = ['cruise_manoeuvres_morechill', 'cruise_manoeuvres' ]
+manoeuvres = ['precision_manoeuvres', 'cruise_manoeuvres_morechill', 'cruise_manoeuvres' ]
 # manoeuvres = ['circle_left']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
@@ -110,7 +110,7 @@ for manoeuvre in manoeuvres:
     # df_main['delta_psi'] = ((df_main.delta_time*df_main.delta_psi).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
     
     
-    # df_main = df_main[abs(df_main.delta_psi)<10.] #correct for time in seconds
+    df_main = df_main[abs(df_main.delta_psi)<10.] #correct for time in seconds
 
     # plt.plot(df_main.y.tolist())
     # plt.show()
@@ -172,7 +172,8 @@ for manoeuvre in manoeuvres:
     # plt.plot(df_main.delta_psi_dot_1)
     # plt.plot(df_main.delta_psi_dot)
 
-
+    # plt.plot(df_main.delta_psi)
+   
     df_main.u = ((df_main.delta_time.shift(shift_period)*df_main.u.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
     df_main.v = ((df_main.delta_time.shift(shift_period)*df_main.v.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
     df_main.r = ((df_main.delta_time.shift(shift_period)*df_main.r.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
@@ -180,7 +181,6 @@ for manoeuvre in manoeuvres:
     df_main.u = df_main.u.shift(-mean_period)
     df_main.v = df_main.v.shift(-mean_period)
     df_main.r = df_main.r.shift(-mean_period)
-    
     
     # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
     # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
@@ -220,7 +220,6 @@ for manoeuvre in manoeuvres:
     df_main['psi'] = df_main.delta_psi.cumsum()
     # plt.plot(np.sqrt(df_main.u**2+df_main.v**2).tolist()[:1000])
     # plt.plot(np.sqrt(df_main.x_dot**2+df_main.y_dot**2).tolist()[:1000])
-    # plt.plot(df_main.f_p_40_0)
     # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
     # plt.plot(df_main.rpm_0.tolist())
     # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
