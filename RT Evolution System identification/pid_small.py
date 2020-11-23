@@ -37,6 +37,7 @@ class PID:
         # t_new = time.time()
         # delta_t = t_new - self.t_old
         self.error = self.set_point - current_value
+        # print(self.set_point, self.error)
 
         # Anti windup
 
@@ -54,7 +55,7 @@ class PID:
             self.Integrator = self.Integrator_max
         elif self.Integrator < self.Integrator_min:
             self.Integrator = self.Integrator_min
-
+        # print(self.P_value, self.I_value, self.D_value )
         return self.P_value + self.I_value + self.D_value 
 
     def setPoint(self, set_point):
@@ -95,6 +96,7 @@ class PID:
         """
         if (self.set_point != set_point):
             self.set_point = set_point
+            # print(set_point)
             # self.Integrator = 0
             pass
     def setIntegrator(self, Integrator):
