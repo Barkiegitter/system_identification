@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from ship_class import ship
-from manoeuvre_model_evo import ship_model
+from manoeuvre_model_borkum import ship_model
 import matplotlib.pyplot as plt
 
 
@@ -131,8 +131,8 @@ c2=1.5                     # social constant     # research
 
 df_main = pd.read_csv('test_1_large.csv', sep=',')
 df_main = df_main.dropna()[300:1500]
-coef__ = np.genfromtxt('foo_evo_general.csv', delimiter=',')
-acc_lim = np.genfromtxt('acc_limits.csv', delimiter=',')
+coef__ = np.genfromtxt('borkum_general.csv', delimiter=',')
+# acc_lim = np.genfromtxt('acc_limits.csv', delimiter=',')
 
 
 first_round_coef = coef__[~np.isnan(coef__)].tolist()
@@ -142,7 +142,7 @@ for coefficient in first_round_coef:
     bounds.append(coef_bounds)
     
 
-traj_seg_len = [500, 1000,2000]
+traj_seg_len = [50, 100, 250, 500, 1000,2000]
 nv = len(bounds)   
 initial_fitness = float("inf")
 for traj_len in traj_seg_len:
@@ -153,13 +153,13 @@ for traj_len in traj_seg_len:
         coef__ = np.array([np.asarray(x[:10]),np.asarray(x[10:25]),np.asarray(x[25:40])])
         # print(coef__)
         u, v, r, hdg = df.loc[df.index[0], 'u'],df.loc[df.index[0], 'v'], df.loc[df.index[0], 'r'], df.loc[df.index[0], 'hdg']
-        ship_it_model = ship_model(df.loc[df.index[0], 'u_dot'],df.loc[df.index[0], 'v_dot'], df.loc[df.index[0], 'r_dot'], ship_it, coef__, acc_lim)
+        ship_it_model = ship_model(df.loc[df.index[0], 'u_dot'],df.loc[df.index[0], 'v_dot'], df.loc[df.index[0], 'r_dot'], ship_it, coef__)
         df_sim = pd.DataFrame([])
         for i in df[:-1].index:
             if i%traj_len==0:
                 u, v, r, hdg = df.loc[i,'u'],df.loc[i,'v'], df.loc[i,'r'], df.loc[i, 'hdg']
             u, v, r, hdg, delta_x_0, delta_y_0, delta_r_0, u_dot, v_dot, r_dot = ship_it_model.manoeuvre_model_rt_evolution(u, v, r, hdg,
-                                                                                                           df.loc[i, 'rpm_0']/60., df.loc[i, 'rpm_1']/60., df.loc[i, 'rpm_2']/60.,
+                                                                                                           df.loc[i, 'rpm_0']/600., df.loc[i, 'rpm_1']/600., df.loc[i, 'rpm_2']/600.,
                                                                                                            df.loc[i, 'rsa_0'], df.loc[i, 'rsa_1'], df.loc[i, 'rsa_2'],
                                                                                                            df.loc[i, 'delta_time']
                                                                                                            )

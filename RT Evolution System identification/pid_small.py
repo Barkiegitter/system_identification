@@ -1,7 +1,7 @@
 import time
 class PID:
     def __init__(self, P=0.0, I=0.0, D=1.0, F=0.0, Derivator=0, order=2, Integrator=0,
-                 Predictor=0, p_hoz=3, Ibounds_speed=(-14, 14)):
+                 Predictor=0, p_hoz=3, Ibounds_speed=(-23.3, 23.3)):
         self.Kp = P
         self.Ki = I
         self.Kd = D
@@ -22,7 +22,7 @@ class PID:
         self.override = False
         self.t_old = time.time()
 
-    def update(self, current_value,delta_t, derivative=None):
+    def update(self, current_value, derivative=None):
         """
         Calculate PID output value for given reference input and feedback
 
@@ -34,10 +34,9 @@ class PID:
         :rtype: float
         """
         # print(derivative)
-        # t_new = time.time()
-        # delta_t = t_new - self.t_old
+        t_new = time.time()
+        delta_t = t_new - self.t_old
         self.error = self.set_point - current_value
-        # print(self.set_point, self.error)
 
         # Anti windup
 
@@ -55,7 +54,7 @@ class PID:
             self.Integrator = self.Integrator_max
         elif self.Integrator < self.Integrator_min:
             self.Integrator = self.Integrator_min
-        # print(self.P_value, self.I_value, self.D_value )
+
         return self.P_value + self.I_value + self.D_value 
 
     def setPoint(self, set_point):
@@ -86,19 +85,7 @@ class PID:
             self.set_point = set_point
             # self.Integrator = 0
             pass
-    def setPoint_position(self, set_point):
-        """
-        Update the set-Point of the controller. Update is ignored if the same value is already the setpoint.
-        On update the integrator is set to 0.
 
-        :param set_point: The desired control setpoint
-        :type set_point: float
-        """
-        if (self.set_point != set_point):
-            self.set_point = set_point
-            # print(set_point)
-            # self.Integrator = 0
-            pass
     def setIntegrator(self, Integrator):
         self.Integrator = Integrator
 

@@ -7,14 +7,13 @@ import math
 # read coef from csv
 from ship_class import ship
 coef_ = np.genfromtxt('foo_evo_general.csv', delimiter=',')
-# acc_lim = np.genfromtxt('acc_limits.csv', delimiter=',')
 
 
 
 
 
 class ship_model:
-    def __init__(self, u_dot, v_dot, r_dot, ship, coef_, acc_lim):
+    def __init__(self, u_dot, v_dot, r_dot, ship, coef_):
         self.u_dot_old = 0
         self.v_dot_old = 0
         self.r_dot_old = r_dot
@@ -24,7 +23,7 @@ class ship_model:
         self.r_dot_array = np.zeros(10)
         self.ship =  ship
         self.coef_ = coef_
-        self.acc_lim = acc_lim
+        # self.acc_lim = acc_lim
         # print(self.acc_lim)
         
     def thrust_cone(self, x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down):
@@ -207,6 +206,9 @@ class ship_model:
                                )
                                
         self.u_dot = (surge_partial_force + r * v * self.ship.Mass + 1 *(-1*np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)-np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)-np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2)))/ (self.ship.Mass-self.coef_[0][0])
+        if abs(self.u_dot)<0.00001:
+            self.u_dot = 0.0
+        
         # print(u, surge_partial_force,-1*np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)-np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)-np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2))
         sway_partial_force = (#self.coef_[1][0] * self.v_dot +
                               self.coef_[1][1] * v +
@@ -226,6 +228,8 @@ class ship_model:
                               )
 
         self.v_dot = (sway_partial_force - self.ship.Mass * r * u + 1 * (-np.sin(np.deg2rad(rsa_0))*(f_p_4Q_0)-np.sin(np.deg2rad(rsa_1))*(f_p_4Q_1)-np.sin(np.deg2rad(rsa_2))*(f_p_4Q_2)))/(self.ship.Mass-self.coef_[1][0])
+        if abs(self.v_dot)<0.00001:
+            self.v_dot = 0.0
         # print(self.coef_[2][0])
         force_partial = (#self.coef_[2][0] * self.r_dot +
                          self.coef_[2][1] * r +
@@ -252,11 +256,13 @@ class ship_model:
      
     
         self.r_dot = (force_partial + 1 * (self.ship.x_0*-1*np.sin(np.deg2rad(rsa_0))*(f_p_4Q_0) + self.ship.x_2*-1*np.sin(np.deg2rad(rsa_2))*(f_p_4Q_2) + self.ship.x_1*-1*np.sin(np.deg2rad(rsa_1))*(f_p_4Q_1) - self.ship.y_2*-1*np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2) - self.ship.y_1*-1*np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)))/ (self.ship.I_e -self.coef_[2][0] )
-        
+        if abs(self.r_dot)<0.000001:
+            self.r_dot = 0.0
         # self.r_dot = self.acc_avenger(self.r_dot_temp)
         # Calculating distance covered during this time iterval (using velocity from last interval)
         
         self.r_dot_old = self.r_dot
+        
         # self.u_dot, self.v_dot, self.r_dot = self.acc_correction(self.u_dot, self.v_dot, self.r_dot)
         
         # next_u = u*19/20 + (self.u_dot * dt)/20
@@ -268,6 +274,8 @@ class ship_model:
         next_r = r + (self.r_dot * dt)
         
         # print(self.u_dot, self.v_dot, self.r_dot)
+        
+        
         
         delta_x_0 = (u * np.sin(np.deg2rad(heading)) + v * np.cos(np.deg2rad(heading))) * dt
     

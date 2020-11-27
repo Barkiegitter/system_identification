@@ -102,7 +102,7 @@ for i in df_gps[1:].index:
     for k in df_hdg[integer_loop:].index:
         
         if df_hdg.loc[k,'time']>df_gps.loc[i,'time']:
-            print(k)
+            # print(k)
             if abs(df_hdg.loc[k, 'hdg'] - df_hdg.loc[k - 1, 'hdg']) > 300.0:
                 if df_hdg.loc[k, 'hdg'] > df_hdg.loc[k - 1, 'hdg']:
                     delta_hdg = df_hdg.loc[k, 'hdg'] - 360 - df_hdg.loc[k - 1, 'hdg']
@@ -146,11 +146,13 @@ for component in components_lst_id:
 
 
 
+df_gps.rsa_0 = df_gps.rsa_0/100 + 180
+
+df_gps.rsa_1 = df_gps.rsa_1/100 + 180
+df_gps.rsa_2 = df_gps.rsa_2/100 + 180
 
 
-
-
-
+df_gps.to_csv('RTBorkum.csv', index=False)
 
 
 
