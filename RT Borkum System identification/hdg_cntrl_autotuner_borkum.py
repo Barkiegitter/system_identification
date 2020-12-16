@@ -27,10 +27,10 @@ def PID_tuner(x):
     hdg_position = 0
     current_hdg_setting = 0
     t = 0
-    dt = 0.4 #future: add noise
+    dt = 0.5 #future: add noise
     t_end = 600
-    pid_hdg = PID(P=5.0, I=0.0, D=5, Ibounds_speed=(-90,90)) # -0.04646
-    
+    pid_hdg = PID(P=x[0], I=0., D=x[1], Ibounds_speed=(-90,90)) # -0.04646
+    max_deg_second = 5
     #
     u_ref = []
     u_real = []
@@ -44,11 +44,12 @@ def PID_tuner(x):
                 
                 current_hdg_setting = input_sequence[hdg_position][0]
                 pid_hdg.setPoint_hdg(current_hdg_setting)
+                
                 hdg_position += 1
                 if hdg_position==len(input_sequence):
                     end_input  = 1
             
-            
+        # print(hdg) 
         control_input = pid_hdg.update(hdg)
         
         sign_hdg_diff = np.sign(current_hdg_setting - hdg)
@@ -69,8 +70,7 @@ def PID_tuner(x):
         rsa_0 = 180 + control_input
         
         if abs(control_input-rsa_0)/dt>max_deg_second:
-        
-        rsa_0 = dt*sign_control_input*max_deg_second + rsa_0
+            rsa_0 = dt*sign_control_input*max_deg_second + rsa_0
         
         u, v, r, hdg, delta_x_0, delta_y_0, delta_r_0, u_dot, v_dot, r_dot = ship_model.manoeuvre_model_borkum(u, v, r, hdg,
                                                                                                        rpm_0, rpm_1, rpm_2,
@@ -103,13 +103,13 @@ def PID_tuner(x):
     
 #------------- end objective function 
     
-bounds=[(0.,100.),(-10.,10.), (-1.,100.)]   # upper and lower bounds of variables
-nv = 3                # number of variables
+bounds=[(0.,10.), (-10.,50.)]   # upper and lower bounds of variables
+nv = 2               # number of variables
 mm = -1                   # if minimization problem, mm = -1; if maximization problem, mm = 1
  
 # THE FOLLOWING PARAMETERS ARE OPTINAL.
-particle_size=10    # number of particles
-iterations= 3      # max number of iterations
+particle_size=10   # number of particles
+iterations= 20  # max number of iterations
 w=0.85                    # inertia constant
 c1=1                    # cognative constant   #research
 c2=2                     # social constant     # research

@@ -1,0 +1,20 @@
+[report]
+exclude_lines =
+    pragma: no cover
+    print
+    pass
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    logging
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+
+[run]
+branch = True
+concurrency = multiprocessing
+parallel = True
+omit = tests*
+source = .

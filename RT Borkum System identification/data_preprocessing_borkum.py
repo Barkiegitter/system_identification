@@ -40,7 +40,7 @@ import os
 # scores = {} # scores is an empty dict already
 start = time.time()
 for component in components_lst:
-    target = './can2nmea/logged_frames_borkum/' + str(component) + '.pkl'
+    target = './can2nmea/logged_frames_borkum_09_12/' + str(component) + '.pkl'
     if os.path.getsize(target) > 0:      
         with open(target, "rb") as f:
             unpickled = []
@@ -67,15 +67,18 @@ for component in components_lst:
     df_temp = pd.DataFrame(list(zip([i[0] for i in unpickled], [i[1] for i in unpickled])), 
                 columns =[components_lst_id[components_lst.index(component)]+'_time',components_lst_id[components_lst.index(component)] ])
     df = pd.concat([df, df_temp], axis = 1)
+
+# df = df[::6]
+#%%
     
-df_gps = pd.read_csv('nmea_1599813937.csv')
+df_gps = pd.read_csv('nmea_1607507642.csv')
 
 df_gps.timestamp = df_gps.timestamp.str.replace('T', ' ', regex=True)
 
 df_gps['time'] = pd.to_datetime(df_gps.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 
 df_gps = df_gps[df_gps.payload.str[:6]=='$GPRMC']
-
+#%%
 # df_gps = df_gps[:1000]
 
 df_gps['lat'] = df_gps.payload.str[16:25].astype(float)/100.
@@ -83,7 +86,7 @@ df_gps['lon'] = df_gps.payload.str[28:37].astype(float)/100.
 
 df_gps = df_gps.reset_index(drop=True)
 
-df_hdg = pd.read_csv('nmea_1599813937.csv')
+df_hdg = pd.read_csv('nmea_1607507642.csv')
 
 df_hdg.timestamp = df_hdg.timestamp.str.replace('T', ' ', regex=True)
 
@@ -96,7 +99,7 @@ df_hdg = df_hdg[df_hdg.payload.str[:6]=='$GPHDT']
 df_hdg['hdg'] = df_hdg.payload.str[7:12].astype(float)
 df_hdg = df_hdg.reset_index(drop=True)
 
-
+#%%
 integer_loop = 1
 for i in df_gps[1:].index:
     for k in df_hdg[integer_loop:].index:
@@ -124,21 +127,20 @@ for i in df_gps[1:].index:
         else:
             continue
 
+
+df_gps = df_gps[df_gps.time>df.loc[df.index[0],'rsa_0_time']]
+
 for component in components_lst_id:
     df_gps[component] = 0.0
     integer_loop=1
-    for i in df_gps[1:].index:
+    for i in df_gps[integer_loop:].index:
         for k in df[[component+'_time', component]][integer_loop:].index:
             if df[[component+'_time', component]].loc[k,component+'_time']>df_gps.loc[i,'time']:
-                # print(((main.df_rpm.loc[k,'time']-df_main.loc[i,'time']).total_seconds()) )
                 input_ = df[[component+'_time', component]].loc[k, component] - \
                           ((df[[component+'_time', component]].loc[k, component] - df[[component+'_time', component]].loc[k-1, component])/((df[[component+'_time', component]].loc[k, component+'_time'] - df[[component+'_time', component]].loc[k-1, component+'_time']).total_seconds())) * \
                           ((df[[component+'_time', component]].loc[k, component+'_time']-df_gps.loc[i, 'time']).total_seconds())
-                # print(rsa_inp)
-                # if input_>0.0:
                 df_gps.loc[i, component] = input_
-                # else:
-                #     df_main.loc[i, 'rsa'] = rsa_inp * 35 / 58
+                
                 integer_loop = k - 1
                 break
             else:

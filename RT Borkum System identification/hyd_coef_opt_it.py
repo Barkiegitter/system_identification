@@ -115,7 +115,7 @@ class PSO():
 mm = -1                   # if minimization problem, mm = -1; if maximization problem, mm = 1
  
 # THE FOLLOWING PARAMETERS ARE OPTINAL.
-particle_size=30   # number of particles
+particle_size=25   # number of particles
 iterations=   5 # max number of iterations
 w=0.2                    # inertia constant
 c1=1                    # cognative constant   #research
@@ -129,7 +129,7 @@ c2=1.5                     # social constant     # research
 # it_coef = PSO(traj_error,bounds,particle_size,iterations,initial_fitness = float("inf"),w=0.2, c1=1, c2=1.5)
 
 df_main = pd.read_csv('test_1_large.csv', sep=',')
-df_main = df_main.dropna()[:3000]
+df_main = df_main.dropna()[:2000]
 coef__ = np.genfromtxt('borkum_general.csv', delimiter=',')
 # acc_lim = np.genfromtxt('acc_limits.csv', delimiter=',')
 
@@ -137,14 +137,15 @@ coef__ = np.genfromtxt('borkum_general.csv', delimiter=',')
 first_round_coef = coef__[~np.isnan(coef__)].tolist()
 bounds = []
 for coefficient in first_round_coef:
-    coef_bounds = (coefficient -abs(coefficient/100.0) ,coefficient + abs(coefficient/100.0))
+    coef_bounds = (coefficient -abs(coefficient/10.0) ,coefficient + abs(coefficient/10.0))
     bounds.append(coef_bounds)
     
 
-traj_seg_len = [50, 100, 250, 500, 1000,2000]
+traj_seg_len = [5, 15,25,50,100,250,2000]
 nv = len(bounds)   
 initial_fitness = float("inf")
 for traj_len in traj_seg_len:
+    print(traj_len)
     def traj_error(x):
         ship_it = ship()
         df = df_main
@@ -157,7 +158,7 @@ for traj_len in traj_seg_len:
         for i in df[:-1].index:
             if i%traj_len==0:
                 u, v, r, hdg = df.loc[i,'u'],df.loc[i,'v'], df.loc[i,'r'], df.loc[i, 'hdg']
-            u, v, r, hdg, delta_x_0, delta_y_0, delta_r_0, u_dot, v_dot, r_dot = ship_it_model.manoeuvre_model_rt_evolution(u, v, r, hdg,
+            u, v, r, hdg, delta_x_0, delta_y_0, delta_r_0, u_dot, v_dot, r_dot = ship_it_model.manoeuvre_model_borkum(u, v, r, hdg,
                                                                                                            df.loc[i, 'rpm_0']/600., df.loc[i, 'rpm_1']/600., df.loc[i, 'rpm_2']/600.,
                                                                                                            df.loc[i, 'rsa_0'], df.loc[i, 'rsa_1'], df.loc[i, 'rsa_2'],
                                                                                                            df.loc[i, 'delta_time']
@@ -189,8 +190,10 @@ for traj_len in traj_seg_len:
         
         plt.plot(df.x_real.tolist()[:],df.y_real.tolist()[:])
         plt.plot(df.x_real_sim.tolist()[:],df.y_real_sim.tolist()[:])
+        plt.savefig('examplefitting')
         # plt.plot(df.traj_error)
         plt.show()
+        
         # print(df)
         feature = df.error.cumsum().iloc[-1]
         # print(feature)
@@ -215,6 +218,7 @@ for traj_len in traj_seg_len:
 
 #seperate trajectories
 #analyze delta uu!!!!!!!!!!
+
 
 
 

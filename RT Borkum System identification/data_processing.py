@@ -36,10 +36,10 @@ def haversine(lon1, lat1, lon2, lat2):
 mean_period = 20  #6 #20
 shift_period = int(mean_period/2)
 
-mean_period_delta_psi = 50  #50
+mean_period_delta_psi = 20  #50
 shift_period_delta_psi = int(mean_period/2)
 
-mean_period_dot = 20 #20
+mean_period_dot = 10 #20
 shift_period_dot = int(mean_period/2)
 
 
@@ -55,6 +55,11 @@ time_begin = df_main.timestamp[1]
 df_main['timestamp_norm'] = df_main.timestamp.apply(lambda x: (x-time_begin).total_seconds())
 # df_main.hdg = df_main.hdg + 4.2
 df_main = df_main[10:]
+# df = df_main[:700]
+# df_1 = df_main[650:]
+# df_main = pd.concat([df,df_1], axis=0)
+
+
 # df_main = df_main[10:1200]
 # df_main = df_main.iloc[::2]
 
@@ -89,6 +94,12 @@ for i in df_main[1:].index:
 df_main['x'] = ((df_main.delta_time.shift(shift_period)*df_main.x.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
 df_main['y'] = ((df_main.delta_time.shift(shift_period)*df_main.y.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
 df_main['delta_psi'] = ((df_main.delta_time.shift(shift_period_delta_psi)*df_main.delta_psi.shift(shift_period_delta_psi)).rolling(mean_period_delta_psi).sum()) / df_main.delta_time.shift(shift_period_delta_psi).rolling(window=mean_period_delta_psi).sum()
+
+
+df_main = df_main[df_main.x<20.0]
+df_main = df_main[df_main.delta_psi<20.0]
+
+
 
 df_main.x = df_main.x.shift(-mean_period)
 df_main.y = df_main.y.shift(-mean_period)
@@ -223,8 +234,13 @@ df_main.r_dot = df_main.r_dot.shift(-mean_period_dot)
 # df_main.u_dot = ((df_main.delta_time*df_main.u_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
 # df_main.v_dot = ((df_main.delta_time*df_main.v_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
 # df_main.r_dot = ((df_main.delta_time*df_main.r_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
+df_main['rsa_0_diff'] = df_main.rsa_0.diff()
+df_main['rsa_1_diff'] = df_main.rsa_1.diff()
+df_main['rsa_2_diff'] = df_main.rsa_2.diff()
+df_main = df_main[abs(df_main.rsa_0_diff)<20.]
+df_main = df_main[abs(df_main.rsa_1_diff)<20.]
 
-
+df_main = df_main[abs(df_main.rsa_2_diff)<20.]
 
 
 df_main['x_real'] = df_main.x.cumsum()
@@ -233,9 +249,11 @@ df_main['psi'] = df_main.delta_psi.cumsum()
 # plt.plot(np.sqrt(df_main.u**2+df_main.v**2).tolist()[:1000])
 # plt.plot(np.sqrt(df_main.x_dot**2+df_main.y_dot**2).tolist()[:1000])
 # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
-plt.plot(df_main.u.tolist())
+plt.ylabel('u dot')
+plt.xlabel('time')
+plt.plot(df_main.u_dot.tolist())
 # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
-
+plt.savefig('u_dot_filtercomp.png')
 plt.show()
 
 

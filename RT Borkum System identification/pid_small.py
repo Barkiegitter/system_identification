@@ -22,7 +22,7 @@ class PID:
         self.override = False
         self.t_old = time.time()
 
-    def update(self, current_value, derivative=None):
+    def update(self, current_value,dt, derivative=None):
         """
         Calculate PID output value for given reference input and feedback
 
@@ -34,8 +34,9 @@ class PID:
         :rtype: float
         """
         # print(derivative)
-        t_new = time.time()
-        delta_t = t_new - self.t_old
+        # t_new = time.time()
+        # delta_t = t_new - self.t_old
+        delta_t= dt
         self.error = self.set_point - current_value
 
         # Anti windup
@@ -47,14 +48,15 @@ class PID:
         # Check if external derivative value is supplied
 
         # print(self.Kd, self.error, self.Derivator)
+        # print(self.Kd, self.error, self.Derivator)
         self.D_value = self.Kd * (self.error - self.Derivator)/delta_t
         self.Derivator = self.error
 
-        if self.Integrator > self.Integrator_max:
-            self.Integrator = self.Integrator_max
-        elif self.Integrator < self.Integrator_min:
-            self.Integrator = self.Integrator_min
-
+        # if self.Integrator > self.Integrator_max:
+        #     self.Integrator = self.Integrator_max
+        # elif self.Integrator < self.Integrator_min:
+        #     self.Integrator = self.Integrator_min
+        print(self.I_value)
         return self.P_value + self.I_value + self.D_value 
 
     def setPoint(self, set_point):

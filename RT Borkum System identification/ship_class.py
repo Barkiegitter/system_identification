@@ -48,7 +48,7 @@ class ship:
         self.rho = 1029.
         self.v_max = 12.5*0.5144
         self.C_b = self.Disp/(self.L_fl*self.T*self.B)
-        self.Mass = 120000. #self.Disp*self.rho/2
+        self.Mass = 120000. *1.#self.Disp*self.rho/2
         self.I_e = 1/120*3.14*self.rho*self.L_fl*self.B*self.T*(self.B**2+self.L_fl**2)*4
         self.I_z = self.Mass*(0.25*self.L_fl)**2
         self.w = 2*(self.C_b**5)*(1-self.C_b) + 0.1

@@ -41,8 +41,8 @@ current_hdg_setting = 0
 t = 0
 dt = 0.4 #future: add noise
 t_end = 600
-pid_hdg = PID(P=5.0, I=0.0, D=5, Ibounds_speed=(-90,90)) # -0.04646
-max_deg_second = 5
+pid_hdg = PID(P=100.0, I=0.0, D=11, Ibounds_speed=(-90,90)) # -0.04646
+max_deg_second = 15
 #
 u_ref = []
 u_real = []
@@ -80,7 +80,7 @@ while t<t_end:
     
     
     rpm=10.
-    rpm_0, rpm_1, rpm_2 = rpm, rpm, rpm
+    rpm_0, rpm_1, rpm_2 = rpm, rpm-10, rpm-10
     
     # print(control_input)
     rsa_1, rsa_2 = 180, 180

@@ -9,7 +9,7 @@ from ship_class import ship
 coef_ = np.genfromtxt('borkum_general.csv', delimiter=',')
 # acc_lim = np.genfromtxt('acc_limits.csv', delimiter=',')
 
-
+from ship_components_model import component
 
 
 
@@ -26,6 +26,18 @@ class ship_model:
         self.coef_ = coef_
         # self.acc_lim = acc_lim
         # print(self.acc_lim)
+        
+        self.az_0 = component(0.95, 1.25, -0.1, 'rudder')
+        self.az_1 = component(0.95, 1.25, -0.1, 'rudder')
+        self.az_2 = component(0.95, 1.25, -0.1, 'rudder')
+        
+        self.throttle_0 = component(0.45, 1.5, -0.1, 'throttle')
+        self.throttle_1 = component(0.45, 1.5, -0.1, 'throttle')
+        self.throttle_2 = component(0.45, 1.5, -0.1, 'throttle')
+        
+        
+        
+        
         
     def thrust_cone(self, x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down):
         #check axis!!!!!!! coherent to choosen axis system
@@ -97,11 +109,21 @@ class ship_model:
         return u_dot, v_dot, r_dot
         
         
-        
+      
+       
     def manoeuvre_model_borkum(self, u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt):  #rpm in per second!
-        #, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt)
+
+        # rsa_0 = self.az_0.update_component_pos(rsa_0, dt)
+        # rsa_1 = self.az_1.update_component_pos(rsa_1, dt)
+        # rsa_2 = self.az_2.update_component_pos(rsa_2, dt)
         
-        # rsa_0, rsa_1, rsa_2 = np.rad2deg(rsa_0),np.rad2deg(rsa_1),np.rad2deg(rsa_2)
+        # rpm_0 = self.throttle_0.update_component_pos(rpm_0, dt)
+        # rpm_1 = self.throttle_1.update_component_pos(rpm_1, dt)
+        # rpm_2 = self.throttle_2.update_component_pos(rpm_2, dt)
+        # print(rpm_0, rpm_1, rpm_2)
+        
+        
+        
         u_a_2 = (1-self.ship.w)*((u+r*abs(self.ship.y_2))*-1*np.cos(np.deg2rad(rsa_2)) + (v+r*abs(self.ship.x_2))*-1*np.sin(np.deg2rad(rsa_2))) #(1-ship.w)*
         u_a_1 = (1-self.ship.w)*((u-r*abs(self.ship.y_1))*-1*np.cos(np.deg2rad(rsa_1)) + (-v-r*abs(self.ship.x_1))*-1*np.sin(np.deg2rad(rsa_1))) #(1-ship.w)*
         u_a_0 = (1-self.ship.w)*((u)*-1*np.cos(np.deg2rad(rsa_0)) + ((-v + r*abs(self.ship.x_0))*-1*np.sin(np.deg2rad(rsa_0))) ) #(1-ship.w)*
@@ -139,21 +161,9 @@ class ship_model:
         t_01_phi = self.thruster_interaction_coefficient(self.ship.x_1, self.ship.y_1, rsa_1, 25.0, 100.0, self.ship.x_0, self.ship.y_0, rsa_0)
         f_p_4Q_0 = 1.* ((1 - self.ship.t) * self.ship.beta_coef(beta_0) * 0.5 * self.ship.rho * ((((1-self.ship.w)*u_a_0)**2) + (0.7 * np.pi * rpm_0 * self.ship.D_p) ** 2)) * np.pi / 4 * self.ship.D_p ** 2
        
-        # df_main['f_p_40_0'] = 1.0*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u)**2)+(0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*(ship.D_p**2))#.rolling(20).mean()  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
-        # print(beta_0, f_p_4Q_0)
-       # df_main['f_p_40_0'] = 0.6*((1-self.ship.t)*self.ship.beta_coef(df_main.beta_0)*0.5*self.ship.rho*(((((1-self.ship.w)*df_main.u_a_0)**2)+(0.7*np.pi*df_main.rpm_0*self.ship.D_p)**2))*np.pi/4*self.ship.D_p**2)  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
-
-        # *(1 - t_02_phi) * (1 - t_01_phi)
-        # print(f_p_4Q_0)
-                      # ((1 - self.ship.w) * u_a_0) ** 2 +          
-        # print(beta_0, f_p_4Q_0, u_a_0, rsa_0)
-        # if rpm_0<0.1: 
-        # f_p_4Q_0, f_p_4Q_1, f_p_4Q_2 = 0, 0, 0
-
-                            
-        # f_p_4Q_2, f_p_4Q_1, f_p_4Q_0 = 0,0,0
-        # f_p_4Q_0 = (1 - t_02_phi) * (1 - t_01_phi) * (1 - self.ship.t) * self.ship.beta_coef(beta_0) * 0.5 * self.ship.rho * ((((1 - self.ship.w) * u_a_0) ** 2) + ((0.7 * np.pi * rpm_0 * self.ship.D_p) ** 2)) * np.pi / 4 * (self.ship.D_p ** 2)
-
+        
+       
+       
         # precalculate all values raised to powers or those with less than 5 chained multiplications (don't use numpy for this part)
         # https://stackoverflow.com/questions/18453771/why-is-x3-slower-than-xxx/18453999#18453999
     
