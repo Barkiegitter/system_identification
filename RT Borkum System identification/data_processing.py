@@ -146,7 +146,7 @@ df_main.rsa_2 = df_main.rsa_2.apply(lambda x: 180 if x==360 else x)
 # A = np.identity(3)
 # P = np.identity(3)*0
 # #measurement noise
-# Q = np.diag([0.02,0.2,0.006])
+# Q = np.diag([0.0,0.2,0.006])
 # H = np.identity(3)
 # R = np.diag([0.5, 4.0, 1.0])
 # B = 0
@@ -164,13 +164,13 @@ df_main.rsa_2 = df_main.rsa_2.apply(lambda x: 180 if x==360 else x)
 #     new_states = np.concatenate([new_states, np.expand_dims(x, axis=0)], axis=0)
 # new_states = new_states[1:]
 
-# plt.plot(df_main.delta_psi.tolist())
+# # plt.plot(df_main.x.tolist())
 # df_main.x = new_states[:, 0, :];
 # df_main.y = new_states[:, 1, :];
 # df_main.delta_psi = new_states[:, 2, :]
-# plt.plot(new_states[:,2,:])
+# # plt.plot(new_states[:,0,:])
 
-# plt.show()
+# # plt.show()
 
 df_main['x_dot'] = df_main.x / df_main.delta_time
 df_main['y_dot'] = df_main.y / df_main.delta_time
@@ -184,7 +184,7 @@ df_main.delta_psi_dot = (df_main.delta_time.shift(shift_period)*df_main.delta_ps
 df_main.x_dot = df_main.x_dot.shift(-mean_period)
 df_main.y_dot = df_main.y_dot.shift(-mean_period)
 df_main.delta_psi_dot = df_main.delta_psi_dot.shift(-mean_period)
-
+#%%%
 # df_main['u'] = df_main.apply(lambda row: row.x_dot * np.sin(np.deg2rad(row.hdg)) + row.y_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
 # df_main['v'] = df_main.apply(lambda row: -row.y_dot * np.sin(np.deg2rad(row.hdg)) + row.x_dot * np.cos(np.deg2rad(row.hdg)), axis=1)
 # df_main['r'] = df_main.delta_psi_dot.apply(lambda x: x)
@@ -249,11 +249,11 @@ df_main['psi'] = df_main.delta_psi.cumsum()
 # plt.plot(np.sqrt(df_main.u**2+df_main.v**2).tolist()[:1000])
 # plt.plot(np.sqrt(df_main.x_dot**2+df_main.y_dot**2).tolist()[:1000])
 # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
-plt.ylabel('u dot')
-plt.xlabel('time')
+# plt.ylabel('u dot')
+# plt.xlabel('time')
 plt.plot(df_main.u_dot.tolist())
 # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
-plt.savefig('u_dot_filtercomp.png')
+# plt.savefig('u_dot_filterorig.png')
 plt.show()
 
 

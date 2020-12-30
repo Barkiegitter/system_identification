@@ -22,56 +22,8 @@ class CANTimedFrame:
         return str(self.time) + str(self.can_frame)
         # return f"CAN {self.name}, content = {pretty_hex(bytes(self.can_frame.data))}; {values_str}"
 
-target = './can2nmea/logged_frames_borkum_09_12_model_az/251598624.pkl'
-target_1 = './can2nmea/logged_frames_borkum_09_12_model_az/251605040.pkl'
-
-import os
-# scores = {} # scores is an empty dict already
-start = time.time()
-if os.path.getsize(target) > 0:      
-    with open(target, "rb") as f:
-        unpickled = []
-        while True:
-            try:
-                (az_current, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[2:4])
-                (az_setting, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
-                # (az, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
-
-                # unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), pickle.load(f).can_frame.data])
-                unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), az_current, az_setting])
-                
-            except EOFError:
-                break
-        end_time = time.time()
-        
-import os
-# scores = {} # scores is an empty dict already
-start = time.time()
-if os.path.getsize(target_1) > 0:      
-    with open(target_1, "rb") as f:
-        unpickled_1 = []
-        while True:
-            try:
-                (az_current, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[2:4])
-                (az_setting, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
-                # (az, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
-
-                # unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), pickle.load(f).can_frame.data])
-                unpickled_1.append([datetime.datetime.fromtimestamp(pickle.load(f).time), az_current, az_setting])
-                
-            except EOFError:
-                break
-        end_time = time.time()
-
-# plt.plot([i[0] for i in unpickled] ,[i[6] for i in [k[1] for k in unpickled]])
-figsize = (15, 9 * 9 / 16)
-fig, ax1 = plt.subplots(figsize=figsize)
-# ax1.plot([i[0] for i in unpickled_1], [i[1] for i in unpickled_1])
-# ax1.plot([i[0] for i in unpickled_1], [i[2] for i in unpickled_1])
-# plt.savefig('azblabla.png')
-# #rpm
-# target = './logged_frames_borkum_09_12/251605296.pkl'
-# target_1 = './logged_frames_borkum_09_12/251605552.pkl'
+# target = './can2nmea/logged_frames_borkum/251598624.pkl'
+# target_1 = './can2nmea/logged_frames_borkum/251605040.pkl'
 
 # import os
 # # scores = {} # scores is an empty dict already
@@ -81,46 +33,94 @@ fig, ax1 = plt.subplots(figsize=figsize)
 #         unpickled = []
 #         while True:
 #             try:
-#                 (rpm_current, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[2:4])
-#                 (rpm_setting, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[0:2])
+#                 (az_current, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[2:4])
+#                 (az_setting, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
 #                 # (az, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
 
 #                 # unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), pickle.load(f).can_frame.data])
-#                 unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), rpm_current, rpm_setting])
+#                 unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), az_current, az_setting])
                 
 #             except EOFError:
 #                 break
 #         end_time = time.time()
-
+        
+# import os
+# # scores = {} # scores is an empty dict already
+# start = time.time()
 # if os.path.getsize(target_1) > 0:      
 #     with open(target_1, "rb") as f:
 #         unpickled_1 = []
 #         while True:
 #             try:
-#                 (rpm_current_1, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[2:4])
-#                 (rpm_setting_1, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[0:2])
+#                 (az_current, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[2:4])
+#                 (az_setting, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
 #                 # (az, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
 
 #                 # unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), pickle.load(f).can_frame.data])
-#                 unpickled_1.append([datetime.datetime.fromtimestamp(pickle.load(f).time), rpm_current_1, rpm_setting_1])
+#                 unpickled_1.append([datetime.datetime.fromtimestamp(pickle.load(f).time), az_current, az_setting])
                 
 #             except EOFError:
 #                 break
 #         end_time = time.time()
 
+# plt.plot([i[0] for i in unpickled] ,[i[6] for i in [k[1] for k in unpickled]])
+figsize = (15, 9 * 9 / 16)
+fig, ax1 = plt.subplots(figsize=figsize)
+# ax1.plot([i[0] for i in unpickled_1], [i[1] for i in unpickled_1])
+# ax1.plot([i[0] for i in unpickled_1], [i[2] for i in unpickled_1])
+# plt.savefig('azblabla.png')
+#rpm
+target = './can2nmea/logged_frames_borkum_09_12/234828080.pkl'
+target_1 = './can2nmea/logged_frames_borkum_09_12/234828336.pkl'
+
+import os
+# scores = {} # scores is an empty dict already
+start = time.time()
+if os.path.getsize(target) > 0:      
+    with open(target, "rb") as f:
+        unpickled = []
+        while True:
+            try:
+                (rpm_current, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[2:4])
+                (rpm_setting, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[0:2])
+                # (az, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
+
+                # unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), pickle.load(f).can_frame.data])
+                unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), rpm_current, rpm_setting])
+                
+            except EOFError:
+                break
+        end_time = time.time()
+
+if os.path.getsize(target_1) > 0:      
+    with open(target_1, "rb") as f:
+        unpickled_1 = []
+        while True:
+            try:
+                (rpm_current_1, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[2:4])
+                (rpm_setting_1, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[0:2])
+                # (az, ) = struct.unpack("H", bytes(pickle.load(f).can_frame.data)[:2])
+
+                # unpickled.append([datetime.datetime.fromtimestamp(pickle.load(f).time), pickle.load(f).can_frame.data])
+                unpickled_1.append([datetime.datetime.fromtimestamp(pickle.load(f).time), rpm_current_1, rpm_setting_1])
+                
+            except EOFError:
+                break
+        end_time = time.time()
+
 
 # unpickled = unpickled[:400]
-# figsize = (15, 9 * 9 / 16)
-# fig, ax1 = plt.subplots(figsize=figsize)
+figsize = (15, 9 * 9 / 16)
+fig, ax1 = plt.subplots(figsize=figsize)
 # ax1.plot([i[0] for i in unpickled], [i[1] for i in unpickled])
 # ax1.plot([i[0] for i in unpickled_1], np.asarray([i[2] for i in unpickled_1]))
 # # plt.plot([i[0] for i in unpickled] ,[i[5] for i in [k[1] for k in unpickled]])
 
 # # plt.show()
 # plt.savefig('rpmblabla.png')
-time = np.asarray([i[0] for i in unpickled_1][60:])
-real = np.asarray([i[1] for i in unpickled_1][60:]) #/600
-target = np.asarray([i[2] for i in unpickled_1][60:])#/600 + 8.8
+time = np.asarray([i[0] for i in unpickled_1][1600:2500])
+real = np.asarray([i[1] for i in unpickled][1600:2500]) /600
+target = np.asarray([i[2] for i in unpickled_1][1600:2500])/600 + 8.8
 
 #%%
 
@@ -211,20 +211,20 @@ class component:
 
 
 
-# tau = 0.35   # time constant
-# zeta = 1.8 # damping factor
-# theta = -0.1 # no time delay
-# du = 1.0    # change in u
+tau = 0.45   # time constant
+zeta = 1.8 # damping factor
+theta = -0. # no time delay
+du = 1.0    # change in u
 
 # tau = 0.45  # time constant  for hdg
 # zeta = 1.0 # damping factor for hdg
 # theta = -0.01 # no time delay for hdg
 # du = 1.0    # change in u
 
-tau = 0.95  # time constant  for hdg
-zeta = 1.25 # damping factor for hdg
-theta = -0.1 # no time delay for hdg
-du = 1.0    # change in u
+# tau = 0.95  # time constant  for hdg
+# zeta = 1.2 # damping factor for hdg
+# theta = -0.1 # no time delay for hdg
+# du = 1.0    # change in u
 
 k = 180
 input_hold = 0.0
@@ -232,7 +232,7 @@ time_remaining = theta
 # model time delay
 # put into manoeuver model:
 #     autotune
-component_function = component(tau, zeta, theta, 'rudder')
+component_function = component(tau, zeta, theta, 'throttle')
 for i in range(1,len(time)):
     dt = (time[i] - time[i-1]).total_seconds()
     sim_rpm.append(component_function.update_component_pos(target[i], dt))
@@ -268,9 +268,11 @@ for i in range(1,len(time)):
     
 ax1.plot(real[1:])
 ax1.plot(target[1:])
-ax1.plot(sim_rpm)    
+ax1.plot(sim_rpm)
+plt.xlabel('time')
+plt.ylabel('unscaled rpm input')    
     
-plt.savefig('az_model_1.png')
+# plt.savefig('throttle_model_reponse.png')
     
     
     
