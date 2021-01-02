@@ -115,7 +115,8 @@ class SimpleControls:
         write_topic(self.topic_name, for_send)
 
     def write_csv(self, data, name):
-        headers = ['time', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
+        #headers = ['time', 'lat', 'lon', 'hdg', 'rsa_0', 'rsa_1', 'rsa_2', 'rpm_0', 'rpm_1', 'rpm_2']
+        headers = ['time', 'lat', 'lon', 'hdg', 'rsa', 'rpm']
         with open(name+'.csv', 'a') as outfile:
             writer = csv.writer(outfile)
             writer.writerow(data)
@@ -426,10 +427,14 @@ class SimpleControls:
 
         if time.time()-self.t_reg>0.25:
             self.t_reg = time.time()
+            #self.write_csv(
+            #    [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
+            #     float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
+            #     float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
+            #    'test_delete')
             self.write_csv(
                 [time.time(), ships_mat[0, 0, 2], ships_mat[0, 0, 3], ships_mat[0, 0, 4], float(ships_mat[2, 0, 6]),
-                 float(ships_mat[2, 0, 7]), float(ships_mat[2, 0, 8]),
-                 float(ships_mat[2, 0, 9]), float(ships_mat[2, 0, 10]), float(ships_mat[2, 0, 11])],
-                'precision_manoeuvres')
+                 float(ships_mat[2, 0, 7])],
+                'combistar_run')
 
         return (for_send, ships_mat)
