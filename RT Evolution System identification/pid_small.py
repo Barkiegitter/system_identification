@@ -22,7 +22,7 @@ class PID:
         self.override = False
         self.t_old = time.time()
 
-    def update(self, current_value, derivative=None):
+    def update(self, current_value,dt, derivative=None):
         """
         Calculate PID output value for given reference input and feedback
 
@@ -35,9 +35,8 @@ class PID:
         """
         # print(derivative)
         t_new = time.time()
-        delta_t = t_new - self.t_old
+        delta_t = dt
         self.error = self.set_point - current_value
-
         # Anti windup
 
         self.P_value = self.Kp * self.error
@@ -56,7 +55,45 @@ class PID:
             self.Integrator = self.Integrator_min
 
         return self.P_value + self.I_value + self.D_value 
+    def update_attitude(self, current_value,dt, derivative=None):
+        """
+        Calculate PID output value for given reference input and feedback
 
+        :param current_value: Current measured state.
+        :type current_value: float
+        :param derivative: if not None this value will be used as a direct derivative measurement.
+        :type derivative: float
+        :return: PID control output
+        :rtype: float
+        """
+        # print(derivative)
+        t_new = time.time()
+        delta_t = dt
+        self.error = self.set_point - current_value
+        
+        if self.error<-180.:
+            self.error = 360.-abs(self.error)
+        if self.error>180.:
+            self.error = -1*(360.-abs(self.error))
+        
+        # Anti windup
+        # print(self.error)
+        self.P_value = self.Kp * self.error
+        
+        self.Integrator += (self.error * delta_t)
+        self.I_value = self.Integrator * self.Ki
+        # Check if external derivative value is supplied
+
+        # print(self.Kd, self.error, self.Derivator)
+        self.D_value = self.Kd * (self.error - self.Derivator)/delta_t
+        self.Derivator = self.error
+
+        if self.Integrator > self.Integrator_max:
+            self.Integrator = self.Integrator_max
+        elif self.Integrator < self.Integrator_min:
+            self.Integrator = self.Integrator_min
+
+        return self.P_value + self.I_value + self.D_value 
     def setPoint(self, set_point):
         """
         Update the set-Point of the controller. Update is ignored if the same value is already the setpoint.
@@ -85,6 +122,19 @@ class PID:
             self.set_point = set_point
             # self.Integrator = 0
             pass
+    def setPoint_hdg(self, set_point):
+        """
+        Update the set-Point of the controller. Update is ignored if the same value is already the setpoint.
+        On update the integrator is set to 0.
+
+        :param set_point: The desired control setpoint
+        :type set_point: float
+        """
+        if (self.set_point != set_point):
+            self.set_point = set_point
+            # self.Integrator = 0
+            pass
+
 
     def setIntegrator(self, Integrator):
         self.Integrator = Integrator

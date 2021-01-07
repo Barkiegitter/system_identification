@@ -113,13 +113,13 @@ class ship_model:
        
     def manoeuvre_model_borkum(self, u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt):  #rpm in per second!
 
-        # rsa_0 = self.az_0.update_component_pos(rsa_0, dt)
-        # rsa_1 = self.az_1.update_component_pos(rsa_1, dt)
-        # rsa_2 = self.az_2.update_component_pos(rsa_2, dt)
+        rsa_0 = self.az_0.update_component_pos(rsa_0, dt)
+        rsa_1 = self.az_1.update_component_pos(rsa_1, dt)
+        rsa_2 = self.az_2.update_component_pos(rsa_2, dt)
         
-        # rpm_0 = self.throttle_0.update_component_pos(rpm_0, dt)
-        # rpm_1 = self.throttle_1.update_component_pos(rpm_1, dt)
-        # rpm_2 = self.throttle_2.update_component_pos(rpm_2, dt)
+        rpm_0 = self.throttle_0.update_component_pos(rpm_0, dt)
+        rpm_1 = self.throttle_1.update_component_pos(rpm_1, dt)
+        rpm_2 = self.throttle_2.update_component_pos(rpm_2, dt)
         # print(rpm_0, rpm_1, rpm_2)
         
         

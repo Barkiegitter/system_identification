@@ -267,7 +267,7 @@ for row in a_list:
         row.append(None)
 
 balanced_array = np.array([np.asarray(a_list[0]),np.asarray(a_list[1]),np.asarray(a_list[2])])
-np.savetxt("foo_evo_general.csv", balanced_array, delimiter=",", fmt='%s')
+# np.savetxt("foo_evo_general.csv", balanced_array, delimiter=",", fmt='%s')
 
 # df_main.to_csv('test_1_1_large.csv', index =False)
 

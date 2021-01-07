@@ -9,6 +9,7 @@ from ship_class import ship
 coef_ = np.genfromtxt('foo_evo_general.csv', delimiter=',')
 
 
+from ship_components_model import component
 
 
 
@@ -25,6 +26,15 @@ class ship_model:
         self.coef_ = coef_
         # self.acc_lim = acc_lim
         # print(self.acc_lim)
+        
+        self.az_0 = component(0.95, 1.25, -0.1, 'rudder')
+        self.az_1 = component(0.95, 1.25, -0.1, 'rudder')
+        self.az_2 = component(0.95, 1.25, -0.1, 'rudder')
+        
+        self.throttle_0 = component(0.45, 1.5, -0.1, 'throttle')
+        self.throttle_1 = component(0.45, 1.5, -0.1, 'throttle')
+        self.throttle_2 = component(0.45, 1.5, -0.1, 'throttle')
+        
         
     def thrust_cone(self, x_eng, y_eng, az_eng, cone_deg, flow_distance, x_down, y_down):
         #check axis!!!!!!! coherent to choosen axis system
@@ -99,6 +109,16 @@ class ship_model:
         
     def manoeuvre_model_rt_evolution(self, u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt):  #rpm in per second!
         #, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt)
+        rsa_0 = self.az_0.update_component_pos(rsa_0, dt)
+        rsa_1 = self.az_1.update_component_pos(rsa_1, dt)
+        rsa_2 = self.az_2.update_component_pos(rsa_2, dt)
+        
+        rpm_0 = self.throttle_0.update_component_pos(rpm_0, dt)
+        rpm_1 = self.throttle_1.update_component_pos(rpm_1, dt)
+        rpm_2 = self.throttle_2.update_component_pos(rpm_2, dt)
+        
+        
+        # print(rsa_0, rpm_0)
         
         # rsa_0, rsa_1, rsa_2 = np.rad2deg(rsa_0),np.rad2deg(rsa_1),np.rad2deg(rsa_2)
         u_a_2 = (1-self.ship.w)*((u+r*abs(self.ship.y_2))*-1*np.cos(np.deg2rad(rsa_2)) + (v+r*abs(self.ship.x_2))*-1*np.sin(np.deg2rad(rsa_2))) #(1-ship.w)*

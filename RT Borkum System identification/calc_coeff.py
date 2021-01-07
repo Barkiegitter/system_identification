@@ -280,7 +280,7 @@ for row in a_list:
         row.append(None)
 
 balanced_array = np.array([np.asarray(a_list[0]),np.asarray(a_list[1]),np.asarray(a_list[2])])
-np.savetxt("borkum_general.csv", balanced_array, delimiter=",", fmt='%s')
+# np.savetxt("borkum_general.csv", balanced_array, delimiter=",", fmt='%s')
 
 # import numpy as np
 # from scipy.optimize import curve_fit
