@@ -106,8 +106,19 @@ class ship_model:
         return u_dot, v_dot, r_dot
         
         
-        
+    def az_map(self, angle):
+        if angle>360.0:
+            angle = angle%360.
+        elif -360.0<angle<-0.0:
+            angle = angle + 360
+        elif angle<-360.:
+            angle = -1*(abs(angle)%360)
+        return angle
     def manoeuvre_model_rt_evolution(self, u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt):  #rpm in per second!
+        
+        rsa_0 = self.az_map(rsa_0)
+        rsa_1 = self.az_map(rsa_1)
+        rsa_2 = self.az_map(rsa_2)
         #, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt)
         rsa_0 = self.az_0.update_component_pos(rsa_0, dt)
         rsa_1 = self.az_1.update_component_pos(rsa_1, dt)
@@ -118,7 +129,7 @@ class ship_model:
         rpm_2 = self.throttle_2.update_component_pos(rpm_2, dt)
         
         
-        # print(rsa_0, rpm_0)
+        # print(rsa_1, rpm_1)
         
         # rsa_0, rsa_1, rsa_2 = np.rad2deg(rsa_0),np.rad2deg(rsa_1),np.rad2deg(rsa_2)
         u_a_2 = (1-self.ship.w)*((u+r*abs(self.ship.y_2))*-1*np.cos(np.deg2rad(rsa_2)) + (v+r*abs(self.ship.x_2))*-1*np.sin(np.deg2rad(rsa_2))) #(1-ship.w)*
