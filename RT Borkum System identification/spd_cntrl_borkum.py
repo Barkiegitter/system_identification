@@ -27,17 +27,15 @@ max_rpm_second = 0.5
 rpm = 0 
 
 
-
-
 # (speed, time)
-speed_u = [(0, 0), (2.5,10), (1.1, 140), (3.5, 250), (0, 450)]
+speed_u = [(0, 0), (1.0,10), (1.5, 140), (3.5, 250), (0, 450)]
 end_input = 0
 speed_u_position = 0
 current_speed_setting = 0
 t = 0
 dt = 0.4 #future: add noise
-t_end = 400
-pid_speed = PID(P=2., I=.8, D=1.0) # -0.04646
+t_end = 600
+pid_speed = PID(P=5., I=.6, D=2.0) # -0.04646
 
 #
 u_ref = []
@@ -62,9 +60,9 @@ while t<t_end:
     # print(u, control_input)
     sign_control_input = np.sign(control_input)
     # calculate speed control iput
-    if abs(abs(control_input)-abs(rpm))/dt>max_rpm_second:
+    # if abs(abs(control_input)-abs(rpm))/dt>max_rpm_second:
         
-        rpm = dt*sign_control_input*max_rpm_second + rpm
+    #     rpm = dt*sign_control_input*max_rpm_second + rpm
         # if abs(rpm)>abs(pid_speed.Integrator_max):
         #     rpm = np.sign(rpm)*abs(pid_speed.Integrator_max)
     # print(u)
@@ -75,8 +73,8 @@ while t<t_end:
     
     rpm= control_input
     # print(control_input)
-    if rpm>15.5:
-        rpm = 15.5
+    if rpm>20:
+        rpm = 20
     
     
     if rpm>0.0:
@@ -95,7 +93,7 @@ while t<t_end:
     
     u_ref.append(current_speed_setting)
     u_real.append(u)
-    rpm_set.append(rpm)
+    rpm_set.append(rpm_1)
     t = t + dt
 
 u_ref_array = np.asarray(u_ref)
@@ -107,9 +105,9 @@ u_score = u_score.sum()
 # print(u_score)
 
 
-plt.plot(u_ref)
-plt.plot(u_real)
-# plt.plot(rpm_set)
+# plt.plot(u_ref)
+# plt.plot(u_real)
+plt.plot(rpm_set)
 
 plt.savefig('tuner_borkum.png')
 plt.show()

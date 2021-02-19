@@ -86,7 +86,7 @@ class PID:
         """
         if (self.set_point != set_point):
             self.set_point = set_point
-            # self.Integrator = 0
+            self.Integrator = self.Integrator*0.5
             pass
     def setPoint_hdg(self, set_point):
         """

@@ -45,7 +45,7 @@ shift_period_dot = int(mean_period/2)
 
 manoeuvres = ['circle_left','astern','zigzag_20' , 'zigzag_10', 'circle_right']
 manoeuvres = ['precision_manoeuvres', 'cruise_manoeuvres_morechill', 'cruise_manoeuvres' ]
-# manoeuvres = ['circle_left']
+manoeuvres = ['cruise_manoeuvres']
 df_all = pd.DataFrame([])
 for manoeuvre in manoeuvres:
     file_path = './Autopilot_light/' + manoeuvre + '.csv'
@@ -173,7 +173,7 @@ for manoeuvre in manoeuvres:
     # plt.plot(df_main.delta_psi_dot)
 
     # plt.plot(df_main.delta_psi)
-   
+    
     df_main.u = ((df_main.delta_time.shift(shift_period)*df_main.u.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
     df_main.v = ((df_main.delta_time.shift(shift_period)*df_main.v.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
     df_main.r = ((df_main.delta_time.shift(shift_period)*df_main.r.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
@@ -207,7 +207,11 @@ for manoeuvre in manoeuvres:
     df_main.u_dot = df_main.u_dot.shift(-mean_period_dot)
     df_main.v_dot = df_main.v_dot.shift(-mean_period_dot)
     df_main.r_dot = df_main.r_dot.shift(-mean_period_dot)
-
+    
+    plt.plot(df_main.u_dot)
+    plt.xlabel('time')
+    plt.ylabel('acceleration')
+    plt.savefig('u_dot_doc_fil.png')
     # df_main.u_dot = ((df_main.delta_time*df_main.u_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
     # df_main.v_dot = ((df_main.delta_time*df_main.v_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()
     # df_main.r_dot = ((df_main.delta_time*df_main.r_dot).rolling(mean_period_dot).sum()) / df_main.delta_time.rolling(window=mean_period_dot).sum()

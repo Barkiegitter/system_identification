@@ -18,15 +18,15 @@ from ship_class import ship
 class Kernel:
     def __init__(self, settings):
         pygame.init()
-        self.screen_size = (800, 800) #width height
+        self.screen_size = (900, 800) #width height
         self.screen = pygame.display.set_mode(self.screen_size)
         self.bg_color = (140, 153, 173)
         pygame.display.set_caption('tugboat control')
         
-        self.scale_image = (114,260)
+        self.scale_image = (228,520)
         self.pixel_meter_ratio = 5
 
-        self.spawn_location = (300,300)
+        self.spawn_location = (350,300)
 
         self.tugboat_img = pygame.image.load('tugboat.png')
         self.tugboat_img = pygame.transform.scale(self.tugboat_img, self.scale_image)

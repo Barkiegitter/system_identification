@@ -15,11 +15,10 @@ def azimuth(point1, point2):
 class Turbo_Polyp():
     def __init__(self, x_start, y_start, heading_start):
         self.angle = 0.
-        self.angle_second_circle = 0.4
-        self.angle_second_attitude= 1.2
-        # self.angle_delta = 15.0
+        self.angle_second_circle = 0.6
+        self.angle_second_attitude= 1.0
         
-        self.radius = 75.
+        self.radius = 45.
         
         self.heading = heading_start
         self.x_start = x_start
@@ -42,15 +41,15 @@ coef_ = np.genfromtxt('foo_evo_general.csv', delimiter=',')
 
 ship = ship()
 
-input_ = [(0,0,0,0), (50.0, 0.0,0.0, 1), (50.0, 50.,90.0, 100),(50.0, 50.,270.0, 150),(-50.0, 0.,180.0, 200),(-50.0, 0.,180.0, 250)]#, (0.0, 0,290, 120)]#, (50., 100., 100)]#,(100., 100., 200),(100., 0., 300)]#], (0., 100., 180)]#, (0., 0., 190)]#, (20,70), (10, 150)]
+input_ = [(0,0,0,0), (50.0, 0.0,0.0, 1), (50.0, 50.,90.0, 150),(50.0, 50.,270.0, 250),(-50.0, 0.,180.0, 300),(-50.0, 0.,180.0, 450)]#, (0.0, 0,290, 120)]#, (50., 100., 100)]#,(100., 100., 200),(100., 0., 300)]#], (0., 100., 180)]#, (0., 0., 190)]#, (20,70), (10, 150)]
 end_input = 0
 input_position = 0
 t = 0
 dt = 0.4 #future noise
-t_end = 600
-pid_position_x = PID(P=.5, I=0.0, D=6., Ibounds_speed=(-90,90))
-pid_position_y = PID(P=.5, I=0.00, D=6., Ibounds_speed=(-90,90))
-pid_attitude =   PID(P=0.035, I=0.0, D=.8, Ibounds_speed=(-90,90))
+t_end = 360
+pid_position_x = PID(P=.8, I=0.0, D=8., Ibounds_speed=(-90,90))
+pid_position_y = PID(P=.8, I=0.00, D=8., Ibounds_speed=(-90,90))
+pid_attitude =   PID(P=0.045, I=0.0, D=2.0, Ibounds_speed=(-90,90))
 
 ship_model = ship_model(0,0,0, ship, coef_)
 x, x_old = 0, 0 
@@ -64,7 +63,6 @@ last_coordinate = [0,0]
 sign_attitude_control = 1
 
 current_input_setting_attitude = 0
-
 
 
 turbo_polyp = Turbo_Polyp(x, y, hdg)
@@ -109,8 +107,8 @@ while t<t_end:
                 
                 
                 
-    #turbo_polyp
-    if t - t_polyp>20.0:
+    # turbo_polyp
+    if t - t_polyp>15.0:
         
         new_x, new_y = turbo_polyp.return_coordinates(t - t_polyp)
         new_hdg = turbo_polyp.return_heading(t - t_polyp)
@@ -123,6 +121,8 @@ while t<t_end:
         pid_attitude.setPoint_hdg(current_input_setting_attitude)
         t_polyp = t
         # print(new_x, new_y, new_hdg)
+        
+        
     control_input_x = pid_position_x.update(x, dt)
     control_input_y = pid_position_y.update(y, dt)
     
@@ -139,8 +139,6 @@ while t<t_end:
         rsa_1 = 90
         
         
-        
-        
     if math.copysign(1, control_input_y)==1:
         rsa_2 = 180.0
     else:
@@ -153,10 +151,10 @@ while t<t_end:
     rpm_2 = abs(control_input_y)
     
     
-    if rpm_1>5.0:
-        rpm_1 = 5.0
-    if rpm_2>5.0:
-        rpm_2 = 5.0
+    if rpm_1>2.2:
+        rpm_1 = 2.2
+    if rpm_2>2.2:
+        rpm_2 = 2.2
     
     
 ######### attitude
@@ -172,8 +170,8 @@ while t<t_end:
         if np.sign(control_input_attitude)==1:
             rsa_0 = 90.0
     rpm_0 = abs(control_input_attitude)
-    if rpm_0>5.0:
-        rpm_0 = 5.0
+    if rpm_0>2.2:
+        rpm_0 = 2.2
 ##############    
     
     

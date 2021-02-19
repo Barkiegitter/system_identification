@@ -41,7 +41,7 @@ current_hdg_setting = 0
 t = 0
 dt = 0.4 #future: add noise
 t_end = 600
-pid_hdg = PID(P=100.0, I=0.0, D=11, Ibounds_speed=(-90,90)) # -0.04646
+pid_hdg = PID(P=1.0, I=0.0, D=1., Ibounds_speed=(-90,90)) # -0.04646
 max_deg_second = 15
 #
 u_ref = []
@@ -61,7 +61,7 @@ while t<t_end:
                 end_input  = 1
         
         
-    control_input = pid_hdg.update(hdg)
+    control_input = pid_hdg.update(hdg,dt)
     
     sign_hdg_diff = np.sign(current_hdg_setting - hdg)
     # print(control_input)

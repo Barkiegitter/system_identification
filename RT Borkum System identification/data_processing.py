@@ -196,7 +196,7 @@ df_main['r'] = df_main.delta_psi_dot.apply(lambda x: np.deg2rad(x))
 # plt.plot(df_main.delta_psi_dot)
 
 # plt.plot(df_main.delta_psi)
-   
+
 df_main.u = ((df_main.delta_time.shift(shift_period)*df_main.u.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
 df_main.v = ((df_main.delta_time.shift(shift_period)*df_main.v.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
 df_main.r = ((df_main.delta_time.shift(shift_period)*df_main.r.shift(shift_period)).rolling(mean_period).sum()) / df_main.delta_time.shift(shift_period).rolling(window=mean_period).sum()
@@ -204,7 +204,7 @@ df_main.r = ((df_main.delta_time.shift(shift_period)*df_main.r.shift(shift_perio
 df_main.u = df_main.u.shift(-mean_period)
 df_main.v = df_main.v.shift(-mean_period)
 df_main.r = df_main.r.shift(-mean_period)
-
+plt.plot(df_main.u)
 # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
 # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
 # df_main.u = ((df_main.delta_time*df_main.u).rolling(mean_period).sum()) / df_main.delta_time.rolling(window=mean_period).sum()
@@ -251,7 +251,7 @@ df_main['psi'] = df_main.delta_psi.cumsum()
 # plt.plot(df_main.index.tolist(), df_main.rsa_0.tolist())
 # plt.ylabel('u dot')
 # plt.xlabel('time')
-plt.plot(df_main.u_dot.tolist())
+# plt.plot(df_main.u_dot.tolist())
 # plt.plot(df_main.x_real.tolist()[:],df_main.y_real.tolist()[:])
 # plt.savefig('u_dot_filterorig.png')
 plt.show()

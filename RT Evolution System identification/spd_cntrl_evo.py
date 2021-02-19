@@ -34,14 +34,14 @@ class MA_filter:
         return np.average(self.filter_array)
 
 # (speed, time)
-speed_u = [(0, 0), (3, 20), (5.5, 140), (5, 250), (0, 450)]
+speed_u = [(0, 0), (3, 20), (5.5, 140), (5, 250)]#, (0, 450)]
 end_input = 0
 speed_u_position = 0
 current_speed_setting = 0
 t = 0
 dt = 0.4 #future: add noise
 t_end = 600
-pid_speed = PID(P=15.6, I=0.0, D=10.653, Ibounds_speed=(0,6.3)) # -0.04646
+pid_speed = PID(P=1.0, I=0.1, D=1., Ibounds_speed=(0,600.3)) # -0.04646
 
 #
 u_ref = []
@@ -66,15 +66,15 @@ while t<t_end:
         
         
         
-    control_input = pid_speed.update(u)
+    control_input = pid_speed.update(u, dt)
     sign_control_input = np.sign(control_input)
-    
+    rpm = control_input
     # calculate speed control iput
-    if abs(abs(control_input)-abs(rpm))/dt>max_rpm_second:
+    # if abs(abs(control_input)-abs(rpm))/dt>max_rpm_second:
         
-        rpm = dt*sign_control_input*max_rpm_second + rpm
-        if abs(rpm)>abs(pid_speed.Integrator_max):
-            rpm = np.sign(rpm)*abs(pid_speed.Integrator_max)
+    #     rpm = dt*sign_control_input*max_rpm_second + rpm
+    #     if abs(rpm)>abs(pid_speed.Integrator_max):
+    #         rpm = np.sign(rpm)*abs(pid_speed.Integrator_max)
         # elif rpm<
     # print(rpm)
     # model
@@ -83,15 +83,15 @@ while t<t_end:
     if rpm<0.0:
         rpm=0
     
-    if rpm==0:
-        rpm_0 ,rpm_1, rpm_2 = 0.0,2.0,2.0
-        rsa_0,rsa_1,rsa_2 = 180,120,300
+    # if rpm==0:
+    #     rpm_0 ,rpm_1, rpm_2 = 0.0,2.0,2.0
+    #     rsa_0,rsa_1,rsa_2 = 180,120,300
     
     
         
     
-    # if rpm>0.0:
-    #     rpm_1, rpm_2, rpm_3 = rpm+8.8, rpm+8.8, rpm+8.8
+    if rpm>6.3:
+        rpm_1, rpm_2, rpm_3 = 6.3, 6.3, 6.3
     # else:
     
     
@@ -117,7 +117,7 @@ print(u_score)
 
 plt.plot(u_ref)
 plt.plot(u_real)
-plt.plot(rpm_set)
+# plt.plot(rpm_set)
 
 plt.savefig('tuner_borkum.png')
 plt.show()
