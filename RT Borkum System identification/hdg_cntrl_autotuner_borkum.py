@@ -14,7 +14,7 @@ from ship_class import ship
 from pid_small import PID
 import matplotlib.pyplot as plt
 
-coef_ = np.genfromtxt('borkum_general.csv', delimiter=',')
+coef_ = np.genfromtxt('borkum_general_opt_.csv', delimiter=',')
 
 ship = ship()
 ship_model = ship_model(0,0,0, ship, coef_)

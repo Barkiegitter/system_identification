@@ -28,7 +28,11 @@ ps_rpm_current_id = 218050864
 
 sb_az_current_id = 251605040
  
-sb_rpm_current_id = 251605296   
+sb_rpm_current_id = 251605296  
+
+
+
+ 
 
 components_lst = [centre_az_current_id, centre_rpm_current_id, ps_az_current_id, ps_rpm_current_id, sb_az_current_id, sb_rpm_current_id ]
 components_lst_id = ['rsa_0', 'rpm_0', 'rsa_2', 'rpm_2', 'rsa_1', 'rpm_1']
@@ -78,14 +82,15 @@ df_gps.timestamp = df_gps.timestamp.str.replace('T', ' ', regex=True)
 df_gps['time'] = pd.to_datetime(df_gps.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 
 df_gps = df_gps[df_gps.payload.str[:6]=='$GPRMC']
-#%%
+
+# df_gps = df_gps[2000:]  #########################################################shortened the first part of trip (biased by wind)
 # df_gps = df_gps[:1000]
 
-df_gps['lat'] = df_gps.payload.str[16:25].astype(float)/100.
-df_gps['lon'] = df_gps.payload.str[28:37].astype(float)/100.
+df_gps['lat'] = df_gps.payload.str[16:25].astype('float64')/100.
+df_gps['lon'] = df_gps.payload.str[28:38].astype('float64')/100.
 
 df_gps = df_gps.reset_index(drop=True)
-
+#%%
 df_hdg = pd.read_csv('nmea_1607507642.csv')
 
 df_hdg.timestamp = df_hdg.timestamp.str.replace('T', ' ', regex=True)
@@ -146,15 +151,13 @@ for component in components_lst_id:
             else:
                 None
 
+df_gps.rsa_0 = df_gps.rsa_0/100 
+
+df_gps.rsa_1 = df_gps.rsa_1/100
+df_gps.rsa_2 = df_gps.rsa_2/100 
 
 
-df_gps.rsa_0 = df_gps.rsa_0/100 + 180
-
-df_gps.rsa_1 = df_gps.rsa_1/100 + 180
-df_gps.rsa_2 = df_gps.rsa_2/100 + 180
-
-
-df_gps.to_csv('RTBorkum.csv', index=False)
+df_gps.to_csv('RTBorkum_turbopolyp.csv', index=False)
 
 
 

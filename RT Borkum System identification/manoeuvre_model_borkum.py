@@ -6,7 +6,7 @@ import math
 
 # read coef from csv
 from ship_class import ship
-coef_ = np.genfromtxt('borkum_general.csv', delimiter=',')
+# coef_ = np.genfromtxt('borkum_general.csv', delimiter=',')
 # acc_lim = np.genfromtxt('acc_limits.csv', delimiter=',')
 
 from ship_components_model import component
@@ -109,10 +109,19 @@ class ship_model:
         return u_dot, v_dot, r_dot
         
         
-      
+    def az_map(self, angle):
+        if angle>360.0:
+            angle = angle%360.
+        elif -360.0<angle<-0.0:
+            angle = angle + 360
+        elif angle<-360.:
+            angle = -1*(abs(angle)%360)
+        return angle
        
     def manoeuvre_model_borkum(self, u, v, r, heading, rpm_0, rpm_1, rpm_2, rsa_0, rsa_1, rsa_2, dt):  #rpm in per second!
-
+        # rsa_0 = self.az_map(rsa_0)
+        # rsa_1 = self.az_map(rsa_1)
+        # rsa_2 = self.az_map(rsa_2)
         rsa_0 = self.az_0.update_component_pos(rsa_0, dt)
         rsa_1 = self.az_1.update_component_pos(rsa_1, dt)
         rsa_2 = self.az_2.update_component_pos(rsa_2, dt)
@@ -120,7 +129,8 @@ class ship_model:
         rpm_0 = self.throttle_0.update_component_pos(rpm_0, dt)
         rpm_1 = self.throttle_1.update_component_pos(rpm_1, dt)
         rpm_2 = self.throttle_2.update_component_pos(rpm_2, dt)
-        # print(rpm_0, rpm_1, rpm_2)
+        # print(rpm_0, rpm_1, rpm_2, rsa_0)
+        # print(rpm_0, rsa_0)
         
         
         
@@ -151,17 +161,18 @@ class ship_model:
         # first engine listed experiences thrust decrease, t_21 means thrust reduction ratio due to downstream flow caused by engine 1
         t_21_phi = self.thruster_interaction_coefficient(self.ship.x_1, self.ship.y_1, rsa_1, 25.0, 100.0, self.ship.x_2, self.ship.y_2, rsa_2)
         t_20_phi = self.thruster_interaction_coefficient(self.ship.x_0, self.ship.y_0, rsa_0, 25.0, 100.0, self.ship.x_2, self.ship.y_2, rsa_2)
-        f_p_4Q_2 = 1.*((1 - self.ship.t) * self.ship.beta_coef(beta_2) * 0.5 * self.ship.rho * ((((1-self.ship.w)*u_a_2)**2) + (0.7 * np.pi * rpm_2 * self.ship.D_p) ** 2)) * np.pi / 4 * self.ship.D_p ** 2
+        f_p_4Q_2 = 1.*(1 - self.ship.t) * self.ship.beta_coef(beta_2) * 0.5 * self.ship.rho * (((((1-self.ship.w)*u_a_2)**2) + (0.7 * np.pi * rpm_2 * self.ship.D_p) ** 2)) * np.pi / 4 * self.ship.D_p ** 2
     
         t_12_phi = self.thruster_interaction_coefficient(self.ship.x_2, self.ship.y_2, rsa_2, 25.0, 100.0, self.ship.x_1, self.ship.y_1, rsa_1)
         t_10_phi = self.thruster_interaction_coefficient(self.ship.x_0, self.ship.y_0, rsa_0, 25.0, 100.0, self.ship.x_1, self.ship.y_1, rsa_1)
-        f_p_4Q_1 = 1.* ((1 - self.ship.t) * self.ship.beta_coef(beta_1) * 0.5 * self.ship.rho * ((((1-self.ship.w)*u_a_1)**2) + (0.7 * np.pi * rpm_1 * self.ship.D_p) ** 2)) * np.pi / 4 * self.ship.D_p ** 2
+        f_p_4Q_1 = 1.* (1 - self.ship.t) * self.ship.beta_coef(beta_1) * 0.5 * self.ship.rho * (((((1-self.ship.w)*u_a_1)**2) + (0.7 * np.pi * rpm_1 * self.ship.D_p) ** 2)) * np.pi / 4 * self.ship.D_p ** 2
     # *(1 - t_12_phi) * (1 - t_10_phi) 
         t_02_phi = self.thruster_interaction_coefficient(self.ship.x_2, self.ship.y_2, rsa_2, 25.0, 100.0, self.ship.x_0, self.ship.y_0, rsa_0)
         t_01_phi = self.thruster_interaction_coefficient(self.ship.x_1, self.ship.y_1, rsa_1, 25.0, 100.0, self.ship.x_0, self.ship.y_0, rsa_0)
-        f_p_4Q_0 = 1.* ((1 - self.ship.t) * self.ship.beta_coef(beta_0) * 0.5 * self.ship.rho * ((((1-self.ship.w)*u_a_0)**2) + (0.7 * np.pi * rpm_0 * self.ship.D_p) ** 2)) * np.pi / 4 * self.ship.D_p ** 2
+        f_p_4Q_0 = 1.* (1 - self.ship.t) * self.ship.beta_coef(beta_0) * 0.5 * self.ship.rho * (((((1-self.ship.w)*u_a_0)**2) + (0.7 * np.pi * rpm_0 * self.ship.D_p) ** 2)) * np.pi / 4 * self.ship.D_p ** 2
        
-        
+        # df_main['f_p_40_0'] = multi*1.*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+(0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**2)#.rolling(20).mean()  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
+
        
        
         # precalculate all values raised to powers or those with less than 5 chained multiplications (don't use numpy for this part)
@@ -219,7 +230,7 @@ class ship_model:
         self.u_dot = (surge_partial_force + r * v * self.ship.Mass + 1 *(-1*np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)-np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)-np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2)))/ (self.ship.Mass-self.coef_[0][0])
         if abs(self.u_dot)<0.00001:
             self.u_dot = 0.0
-        
+        # print(self.u_dot)
         # print(u, surge_partial_force,-1*np.cos(np.deg2rad(rsa_0))*(f_p_4Q_0)-np.cos(np.deg2rad(rsa_1))*(f_p_4Q_1)-np.cos(np.deg2rad(rsa_2))*(f_p_4Q_2))
         sway_partial_force = (#self.coef_[1][0] * self.v_dot +
                               self.coef_[1][1] * v +
@@ -284,7 +295,7 @@ class ship_model:
         next_v = v + (self.v_dot * dt)
         next_r = r + (self.r_dot * dt)
         
-        # print(self.u_dot, self.v_dot, self.r_dot)
+        # print(self.u_dot, self.v_dot, self.r_dot, rsa_0, rsa_1, rsa_2)
         
         
         
@@ -305,7 +316,7 @@ class ship_model:
         #         f_p_4Q_1) - np.sin(np.deg2rad(rsa_2)) * abs(f_p_4Q_2))) / (self.ship.Mass)
 
         # print(rsa_0)
-        # print(self.r_dot)
+        # print(surge_partial_force, sway_partial_force, force_partial)
         check=0
         return next_u, next_v, next_r, next_heading, delta_x_0, delta_y_0, delta_r_0, self.u_dot, self.v_dot, self.r_dot
         # return next_u, next_v, next_r

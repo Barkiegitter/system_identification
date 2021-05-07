@@ -12,7 +12,7 @@ from ship_class import ship
 from pid_small import PID
 import matplotlib.pyplot as plt
 ship = ship()
-coef_ = np.genfromtxt('borkum_general.csv', delimiter=',')
+coef_ = np.genfromtxt('borkum_general_opt_.csv', delimiter=',')
 
 
 # P_range = np.arange(0,10.2,0.2)
@@ -20,7 +20,7 @@ coef_ = np.genfromtxt('borkum_general.csv', delimiter=',')
 # D_range = np.arange(0,10.2,0.2)
 
 #initialise ship
-u, v, r, hdg = 2,0,0,0
+u, v, r, hdg = 5,0,0,10
 ship_model = ship_model(0,0,0, ship, coef_)
 max_rpm_second = 1.2
 rpm = 0 
@@ -34,14 +34,14 @@ rpm = 0
 #         return np.average(self.filter_array)
 
 # (speed, time)
-input_sequence = [(0, 0), (40, 20), (350, 140), (10, 250), (50, 450)]
+input_sequence = [(10, 0), (40, 20), (350, 140), (10, 250), (50, 450)]
 end_input = 0
 hdg_position = 0
 current_hdg_setting = 0
 t = 0
 dt = 0.4 #future: add noise
-t_end = 600
-pid_hdg = PID(P=1.0, I=0.0, D=1., Ibounds_speed=(-90,90)) # -0.04646
+t_end = 200
+pid_hdg = PID(P=1.0, I=0.0, D=15.0, Ibounds_speed=(-90,90)) # -0.04646
 max_deg_second = 15
 #
 u_ref = []
@@ -62,13 +62,14 @@ while t<t_end:
         
         
     control_input = pid_hdg.update(hdg,dt)
-    
-    sign_hdg_diff = np.sign(current_hdg_setting - hdg)
+    print(control_input)
+    # sign_hdg_diff = np.sign(current_hdg_setting - hdg)
+    # control_input
     # print(control_input)
-    if abs(current_hdg_setting - hdg)>180.:
-        # print('a')
-        control_input = control_input*-1
-        # print(control_input)
+    # if abs(current_hdg_setting - hdg)>180.:
+    #     # print('a')
+    #     control_input = control_input*-1
+    #     # print(control_input)
     sign_control_input = np.sign(control_input)
     if abs(control_input)>35.:
         control_input = sign_control_input * 35
@@ -79,17 +80,18 @@ while t<t_end:
     
     
     
-    rpm=10.
-    rpm_0, rpm_1, rpm_2 = rpm, rpm-10, rpm-10
+    rpm=15.
+    # rpm_0, rpm_1, rpm_2 = rpm, rpm-10, rpm-10
+    rpm_0, rpm_1, rpm_2 = rpm, rpm, rpm
     
     # print(control_input)
     rsa_1, rsa_2 = 180, 180
-    rsa_0 = 180 + control_input
+    rsa_0 = control_input
     
     
-    if abs(control_input-rsa_0)/dt>max_deg_second:
+    # if abs(control_input-rsa_0)/dt>max_deg_second:
         
-        rsa_0 = dt*sign_control_input*max_deg_second + rsa_0
+    #     rsa_0 = dt*sign_control_input*max_deg_second + rsa_0
         # if abs(rpm)>abs(pid_speed.Integrator_max):
         #     rpm = np.sign(rpm)*abs(pid_speed.Integrator_max)
             
@@ -104,6 +106,7 @@ while t<t_end:
     u_real.append(hdg)
     rpm_set.append(rpm)
     t = t + dt
+    # print(rsa_0)
 
 u_ref_array = np.asarray(u_ref)
 u_real_array = np.asarray(u_real)

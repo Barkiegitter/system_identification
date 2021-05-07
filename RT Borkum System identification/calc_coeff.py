@@ -3,6 +3,7 @@ import pandas as pd
 from numpy import newaxis
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import Ridge
+from sklearn.linear_model import RidgeCV
 import matplotlib.pyplot as plt
 import math
 
@@ -12,7 +13,7 @@ from sklearn.model_selection import GridSearchCV
 ##
 from ship_class import ship
 ship = ship()
-df_main = pd.read_csv('test_1_large.csv', sep=',')
+df_main = pd.read_csv('test_1_large_turbopolyp.csv', sep=',')[2000:]
 # df_main = df_main[30400:31600].reset_index(inplace=False)
 df_main.timestamp = pd.to_datetime(df_main.timestamp, format='%Y-%m-%d %H:%M:%S.%f')
 df_main = df_main.dropna()
@@ -111,9 +112,9 @@ df_main['t_01_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient
 df_main['f_p_40_0'] = multi*1.*((1-ship.t)*ship.beta_coef(df_main.beta_0)*0.5*ship.rho*(((((1-ship.w)*df_main.u_a_0)**2)+(0.7*np.pi*df_main.rpm_0*ship.D_p)**2))*np.pi/4*ship.D_p**2)#.rolling(20).mean()  #(1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
 
 
-df_main['f_p_40_0'] = df_main.apply(lambda row: 0.0 if row['rpm_0']<9.0 else row['f_p_40_0'], axis=1)
-df_main['f_p_40_1'] = df_main.apply(lambda row: 0.0 if row['rpm_1']<9.0 else row['f_p_40_1'], axis=1)
-df_main['f_p_40_2'] = df_main.apply(lambda row: 0.0 if row['rpm_2']<9.0 else row['f_p_40_2'], axis=1)
+# df_main['f_p_40_0'] = df_main.apply(lambda row: 0.0 if row['rpm_0']<9.0 else row['f_p_40_0'], axis=1)
+# df_main['f_p_40_1'] = df_main.apply(lambda row: 0.0 if row['rpm_1']<9.0 else row['f_p_40_1'], axis=1)
+# df_main['f_p_40_2'] = df_main.apply(lambda row: 0.0 if row['rpm_2']<9.0 else row['f_p_40_2'], axis=1)
 
 # (1-df_main['t_02_phi'])*(1-df_main['t_01_phi'])*
 # J =(1-w)*u/(n_p*D_p);                                                               % Advance ratio of the propeller   J =(1-w)*u/(n_p*D_p)
@@ -123,8 +124,6 @@ df_main['f_p_40_2'] = df_main.apply(lambda row: 0.0 if row['rpm_2']<9.0 else row
 
 # df_main['t_21_phi'] = df_main.apply(lambda row: thruster_interaction_coefficient(ship.x_1, ship.y_1, row['rsa_1'], 25.0, 100.0, ship.x_2, ship.y_2, row['rsa_2']), axis=1)
 
-plt.plot(df_main['t_02_phi'])
-plt.show()
 # df_main = df_main[abs(df_main.rsa_0.diff())<20.]
 # df_main = df_main[abs(df_main.rsa_1.diff())<20.]
 
@@ -192,7 +191,7 @@ uv = np.arctan(v/u)
 # X = u uu uuu vv rr vr uvv rvu urr
 # Y = v uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
 # N = r uv ur uur uuv vvv rrr rrv vvr abs(v)v abs(r)v rabs(v) abs(r)r
-X = np.concatenate([u_dot,u, u*u,u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r,
+X = np.concatenate([u_dot,u, u*u,u*u*u, v*v, r*r, v*r, u*v*v, r*v*u, u*r*r, 
                     # np.deg2rad(rsa_0)*np.deg2rad(rsa_0),np.deg2rad(rsa_1)*np.deg2rad(rsa_1),np.deg2rad(rsa_2)*np.deg2rad(rsa_2),
                     # np.deg2rad(rsa_0)*r*u,np.deg2rad(rsa_1)*r*u,np.deg2rad(rsa_2)*r*u,
                     # np.deg2rad(rsa_0)*u,np.deg2rad(rsa_1)*u,np.deg2rad(rsa_2)*u, 
@@ -214,44 +213,64 @@ y_r = ship.I_e*r_dot-1*(ship.x_0*-1*np.sin(np.deg2rad(rsa_0))*(f_p_40_0)+ship.x_
 
 
 model = Ridge(fit_intercept=False)
-cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=1)
+cv = RepeatedKFold(n_splits=5, n_repeats=10, random_state=25)
 grid = dict()
-grid['alpha'] = np.arange(0.0, 0.5, 0.5)
-search = GridSearchCV(model, grid, scoring='neg_mean_absolute_error', cv=cv, n_jobs=-1)
+grid['alpha'] = np.logspace(0.0, -4.0, num=200)
+search = GridSearchCV(model, grid, scoring='neg_mean_squared_error', cv=cv, n_jobs=-1)
 results_x = search.fit(X, y_x)
+one_mse_value = search.cv_results_['mean_test_score'][-1] - search.cv_results_['mean_test_score'].std()*1.5
+a = [i for i in range(len(search.cv_results_['mean_test_score'])) if search.cv_results_['mean_test_score'][i] > one_mse_value]
+# search.param_grid['alpha'][0][int(a[0])]
+clf_x = Ridge(alpha=search.param_grid['alpha'][int(a[0])])
+clf_x.fit(X, y_x)
+# clf.score(X, y_x)
+
 
 model = Ridge(fit_intercept=False)
-cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=1)
+cv = RepeatedKFold(n_splits=5, n_repeats=10, random_state=25)
 grid = dict()
-grid['alpha'] = np.arange(0.0, 0.5, 0.5)
-search = GridSearchCV(model, grid, scoring='neg_mean_absolute_error', cv=cv, n_jobs=-1)
-results_y = search.fit(Y, y_y)
+grid['alpha'] = np.logspace(1.0, -4.0, num=200) #verandert
+search = GridSearchCV(model, grid, scoring='neg_mean_squared_error', cv=cv, n_jobs=-1)
+results_x = search.fit(Y, y_y)
+one_mse_value = search.cv_results_['mean_test_score'][-1] - search.cv_results_['mean_test_score'].std()*3
+a = [i for i in range(len(search.cv_results_['mean_test_score'])) if search.cv_results_['mean_test_score'][i] > one_mse_value]
+# search.param_grid['alpha'][0][int(a[0])]
+clf_y = Ridge(alpha=search.param_grid['alpha'][int(a[0])])
+clf_y.fit(Y, y_y)
 
 model = Ridge(fit_intercept=False)
-cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=1)
+cv = RepeatedKFold(n_splits=5, n_repeats=10, random_state=25)
 grid = dict()
-grid['alpha'] = np.arange(0, 1.0, 1.0)
-search = GridSearchCV(model, grid, scoring='neg_mean_absolute_error')#, cv=cv)#, n_jobs=-1)
-results_r = search.fit(N, y_r)
+grid['alpha'] = np.logspace(0.0, -4.0, num=200)
+search = GridSearchCV(model, grid, scoring='neg_mean_squared_error', cv=cv, n_jobs=-1)
+results_x = search.fit(N, y_r)
+one_mse_value = search.cv_results_['mean_test_score'][-1] - search.cv_results_['mean_test_score'].std()*1.5
+a = [i for i in range(len(search.cv_results_['mean_test_score'])) if search.cv_results_['mean_test_score'][i] > one_mse_value]
+# search.param_grid['alpha'][0][int(a[0])]
+clf_n = Ridge(alpha=search.param_grid['alpha'][int(a[0])])
+clf_n.fit(N, y_r)
 
-print(results_x.best_estimator_.score(X,y_x), results_x.best_estimator_.alpha)
-print(results_y.best_estimator_.score(Y,y_y), results_y.best_estimator_.alpha)
-print(results_r.best_estimator_.score(N,y_r), results_r.best_estimator_.alpha)
+# calculate standard deviation
+
+print(clf_x.score(X,y_x), clf_x.alpha)
+print(clf_y.score(Y,y_y), clf_y.alpha)
+print(clf_n.score(N,y_r), clf_n.alpha)
 
 
-plt.plot(y_x)
-plt.plot(np.sum(X*results_x.best_estimator_.coef_, axis=1))
+ 
+plt.plot(np.sum(X*clf_x.coef_, axis=1));plt.plot(y_x)
+# plt.plot(*(X/y_x))
 # plt.plot(df_main.f_p_40_0)
 plt.title('u_dot')
 plt.savefig('u.png')
 plt.show()
 plt.close()
-plt.plot(np.sum(Y*results_y.best_estimator_.coef_, axis=1));plt.plot(y_y)
+plt.plot(np.sum(Y*clf_y.coef_, axis=1));plt.plot(y_y)
 plt.title('v_dot')
 plt.savefig('v.png')
 plt.show()
 plt.close()
-plt.plot(np.sum(N*results_r.best_estimator_.coef_, axis=1));plt.plot(y_r)
+plt.plot(np.sum(N*clf_n.coef_, axis=1));plt.plot(y_r)
 plt.title('r_dot')
 plt.savefig('r.png')
 plt.show()
@@ -264,10 +283,7 @@ a = np.asarray([[df_main.u_dot.quantile(0.75),df_main.u_dot.diff().quantile(0.75
 
 np.savetxt("acc_limits.csv", a, delimiter=",", fmt='%s')
 
-
-
-
-a_list = [list(results_x.best_estimator_.coef_[0]),list(results_y.best_estimator_.coef_[0]),list(results_r.best_estimator_.coef_[0])]
+a_list = [list(clf_x.coef_[0]),list(clf_y.coef_[0]),list(clf_n.coef_[0])]
 row_lengths = []
 
 for row in a_list:
@@ -280,8 +296,10 @@ for row in a_list:
         row.append(None)
 
 balanced_array = np.array([np.asarray(a_list[0]),np.asarray(a_list[1]),np.asarray(a_list[2])])
-# np.savetxt("borkum_general.csv", balanced_array, delimiter=",", fmt='%s')
+np.savetxt("borkum_general_opt_.csv", balanced_array, delimiter=",", fmt='%s')
 
+
+print(balanced_array)
 # import numpy as np
 # from scipy.optimize import curve_fit
 # from scipy.integrate import odeint

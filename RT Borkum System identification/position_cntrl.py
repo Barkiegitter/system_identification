@@ -11,33 +11,87 @@ def azimuth(point1, point2):
     return np.degrees(angle) if angle >= 0 else np.degrees(angle) + 360
     #add thrust fraction here
     
-coef_ = np.genfromtxt('borkum_general.csv', delimiter=',')
+    
+class Turbo_Polyp():
+    def __init__(self, x_start, y_start, heading_start):
+        self.angle = 0.
+        self.angle_second_circle = 0.8
+        self.angle_second_attitude= 2.5
+        
+        self.radius = 20.
+        
+        self.heading = heading_start
+        self.x_start = x_start
+        self.y_start = y_start
+        
+    
+    def return_coordinates(self, time_delta):
+        self.angle = self.angle + time_delta*self.angle_second_circle
+        # print(self.angle)
+        new_x = self.x_start + self.radius*np.cos(np.deg2rad(self.angle))
+        new_y = self.x_start + self.radius*np.sin(np.deg2rad(self.angle))
+        return new_x, new_y
+    
+    def return_heading(self, time_delta):
+        self.heading = self.heading + time_delta*self.angle_second_attitude
+        return self.heading%360
+ 
+    
+import time
+# time.sleep(3) 
+coef_ = np.genfromtxt('borkum_general_opt_.csv', delimiter=',')
 
 ship = ship()
 
-
-input_ = [(0,0,0,0), (20.0, 20,0, 1)]#, (50., 100., 100)]#,(100., 100., 200),(100., 0., 300)]#], (0., 100., 180)]#, (0., 0., 190)]#, (20,70), (10, 150)]
+input_ = [(0,0,0,0),(50.0, 50.0,45.0, 1)]#, (50.0, 50.0,225, 50)]#, (0.0, 50.,270.0, 150)]#,(-50.0, -50.,270.0, 250)]#,(-50.0, 0.,180.0, 300),(-50.0, 0.,180.0, 450)]#, (0.0, 0,290, 120)]#, (50., 100., 100)]#,(100., 100., 200),(100., 0., 300)]#], (0., 100., 180)]#, (0., 0., 190)]#, (20,70), (10, 150)]
 end_input = 0
 input_position = 0
 t = 0
-dt = 0.4 #future noise
-t_end = 22
-pid_position_x = PID(P=0.9, I=0.0, D=1., Ibounds_speed=(-90,90))
-pid_position_y = PID(P=0.9, I=0.0, D=1., Ibounds_speed=(-90,90))
-pid_attitude = PID(P=0.1, I=0.0, D=2.5, Ibounds_speed=(-90,90))
+dt = 1. #future noise
+t_end = 520
+pid_position_x = PID(P=0.6, I=0.0, D=25.)
+pid_position_y = PID(P=0.6, I=0.0, D=25.)
+pid_attitude =   PID(P=.1, I=0., D=16.5)
 
+
+# pid_position_x = PID(P=2.5, I=0.0, D=50.)
+# pid_position_y = PID(P=2.5, I=0.0, D=50.)
+# pid_attitude =   PID(P=.85, I=0.0, D=25.0)
+
+
+# pid_attitude =   PID(P=.265, I=0.0, D=.9)
 ship_model = ship_model(0,0,0, ship, coef_)
 x, x_old = 0, 0 
 y, y_old = 0, 0
-u, v, r, hdg = 0.0,0,0,0
+u, v, r, hdg = 0.0,0,0,45
 rpm_1, rpm_2 = 0,0
 input_ref = []
-position_real = []
 traj_x, traj_y, hdg_list = [], [], []
-x = 0
-ref_side = 0
-traj_angle_position = 0
 last_coordinate = [0,0]
+
+sign_attitude_control = 1
+
+current_input_setting_attitude = 0
+
+turbo_polyp = Turbo_Polyp(x, y, hdg)
+t_polyp = 0.0
+
+current_input_setting_x = turbo_polyp.radius
+current_input_setting_y = y
+current_input_setting_attitude = hdg
+
+pid_position_x.setPoint_hdg(current_input_setting_x)
+pid_position_y.setPoint_hdg(current_input_setting_y)
+pid_attitude.setPoint_hdg(current_input_setting_attitude)
+
+#init pygame
+from pygame_visualize import Kernel
+settings = None
+game_vis = Kernel(settings)
+
+max_rpm = 12.2
+
+
 while t<t_end:
     # calculate speed input
     # print(end_input)
@@ -50,22 +104,37 @@ while t<t_end:
             current_input_setting_y = input_[input_position+1][1]
             current_input_setting_attitude = input_[input_position+1][2]
             
-            
-        
             pid_position_x.setPoint_hdg(current_input_setting_x)
             pid_position_y.setPoint_hdg(current_input_setting_y)
             pid_attitude.setPoint_hdg(current_input_setting_attitude)
             
-            
-            
             input_position += 1
             if input_position==len(input_)-1:
                 end_input = 1
-
+                
+                
+                
+    # turbo_polyp
+    # if t - t_polyp>5.0:
+        
+    #     new_x, new_y = turbo_polyp.return_coordinates(t - t_polyp)
+    #     # print(new_x, new_y)
+    #     new_hdg = turbo_polyp.return_heading(t - t_polyp)
+    #     current_input_setting_x = new_x
+    #     current_input_setting_y = new_y
+    #     current_input_setting_attitude = new_hdg
+        
+    #     pid_position_x.setPoint_hdg(current_input_setting_x)
+    #     pid_position_y.setPoint_hdg(current_input_setting_y)
+    #     pid_attitude.setPoint_hdg(current_input_setting_attitude)
+    #     t_polyp = t
+    #     # print(new_x, new_y, new_hdg)
+        
+        
     control_input_x = pid_position_x.update(x, dt)
     control_input_y = pid_position_y.update(y, dt)
     
-    
+    # print(control_input_x)
     sign_control_input_x = np.sign(control_input_x)
     sign_control_input_y = np.sign(control_input_y)
     
@@ -73,51 +142,54 @@ while t<t_end:
     
     
     if math.copysign(1, control_input_x)==1:
-        rsa_1 = 90
+        rsa_1 = 270.
     else:
-        rsa_1 = 270
+        rsa_1 = 90.
+        
+        
     if math.copysign(1, control_input_y)==1:
         rsa_2 = 180.0
     else:
         rsa_2 = 0.0
     
-    
-    
-    control_input_attitude = pid_attitude.update(hdg, dt)
-    sign_control_input_attitude = np.sign(control_input_attitude)     
-    if abs(control_input_attitude)<2.0:
-        control_input_attitude=0.
-    
-    if math.copysign(1, control_input_attitude)==1:
-        rsa_0 = 270.0
-    else:
-        rsa_0 = 90.0
-    
-    rpm_0 = abs(control_input_attitude)
-    if rpm_0>5.0:
-        rpm_0 = 5.0
-    
-    
-    
-    
-    rsa_1 = rsa_1 + hdg 
-    rsa_2 = rsa_2 + hdg    
-   
-        
-        
-    
-    print(control_input_attitude, control_input_x, control_input_y,rsa_0,hdg)
+    rsa_1 = rsa_1 - hdg 
+    rsa_2 = rsa_2 - hdg 
 
-    # print(az_deflection)
     rpm_1 = abs(control_input_x)
     rpm_2 = abs(control_input_y)
     
     
-    if rpm_1>2.0:
-        rpm_1 = 2.0
-    if rpm_2>5.0:
-        rpm_2 = 5.0
+    if rpm_1>max_rpm:
+        rpm_1 = max_rpm
+    if rpm_2>max_rpm:
+        rpm_2 = max_rpm
     
+    
+######### attitude
+    control_input_attitude = pid_attitude.update_attitude(hdg, dt)
+    sign_control_input_attitude = np.sign(control_input_attitude)     
+    print(control_input_attitude)
+    if 180.>(current_input_setting_attitude-hdg)>0.0 or -360.0<(current_input_setting_attitude-hdg)<-180.0:
+        rsa_0 = 90.0
+        if np.sign(control_input_attitude)==-1:
+            rsa_0 = 270.0
+    else:
+        rsa_0 = 270.0
+        if np.sign(control_input_attitude)==1:
+            rsa_0 = 90.0
+    rpm_0 = abs(control_input_attitude)
+    if rpm_0>max_rpm:
+        rpm_0 = max_rpm
+        
+    print('a', rsa_0, rsa_1, rsa_2, rpm_0)
+##############    
+    
+    
+    
+   
+        
+    # print(control_input_attitude, current_input_setting_attitude-hdg, rsa_0, hdg)
+
     
     
     u, v, r, hdg, delta_x_0, delta_y_0, delta_r_0, u_dot, v_dot, r_dot = ship_model.manoeuvre_model_borkum(u, v, r, hdg,
@@ -125,21 +197,23 @@ while t<t_end:
                                                                                                rsa_0, rsa_1, rsa_2,
                                                                                                dt
                                                                                               )
-    print(u,v,r)
-    # print('-', az_deflection, direction_gen)
 
     x = x + delta_x_0
     y = y + delta_y_0
-    # position_real.append(np.sqrt(((input_[input_position][0] - x)**2)+((input_[input_position][1] - y)**2)))
-    # position_real.append(y)
+    
+    #visualize send x, y and hdg
+    time.sleep(0.001)
+    game_vis.main_loop(x,y,hdg)
+    
+    
+
     traj_x.append(x)
     traj_y.append(y)
-    # hdg_list.append(np.sqrt(u**2+v**2))
-    hdg_list.append(rsa_1)
-    # print(az_deflection)
-    # print(correction)
-    # print(angle_resultant-hdg)
-    # print(angle_resultant)
+    hdg_list.append(rsa_0)
+    input_ref.append(current_input_setting_attitude)
     t = t + dt
-plt.plot(traj_x,traj_y)
+# plt.plot(hdg_list)
+# plt.plot(input_ref)
+plt.plot(traj_x, traj_y)
+# plt.plot(hdg_list)
 

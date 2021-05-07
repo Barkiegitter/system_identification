@@ -23,7 +23,7 @@ class Kernel:
         self.bg_color = (140, 153, 173)
         pygame.display.set_caption('tugboat control')
         
-        self.scale_image = (228,520)
+        self.scale_image = (int(228*0.6),int(520*0.6))
         self.pixel_meter_ratio = 5
 
         self.spawn_location = (350,300)
